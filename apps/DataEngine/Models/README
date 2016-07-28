@@ -1,0 +1,16 @@
+===== Data =====
+
+- Placeholder : 
+- Field : 
+- Link :
+- Filter :
+
+===== Flows =====
+
+- Connection:
+  - Details (host, user, pass, base)
+
+- Workflow :
+  - 2+ connections : 1+ source, 1 destination
+  - 2+ collections : 1+ source, 1+ destination
+  - Policy : 
