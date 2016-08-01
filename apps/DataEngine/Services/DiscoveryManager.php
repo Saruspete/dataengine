@@ -7,8 +7,6 @@ use AMPortal\DataEngine\Models\Connection;
 
 class DiscoveryManager extends BaseManager {
 
-
-
 	/**
 	 *
 	 *
@@ -16,7 +14,7 @@ class DiscoveryManager extends BaseManager {
 	public function discover(Connection $c, $refresh = true) {
 
 		// Get the object according to the type
-		$o_discovery = $this->_createDiscovery($c->type);
+		$o_discovery = $this->_createDiscovery($c);
 
 		if (!$o_discovery->testConnection($c)) {
 			throw new \Phalcon\Exception("Unable to connect using provided connection");
@@ -28,24 +26,6 @@ class DiscoveryManager extends BaseManager {
 		$o_discovery->discoverRelations($c);
 
 		return true;
-	}
-
-	/**
-	 * Discover the table structures
-	 *
-	 */
-	public function discoverStructure(Connection $c, $discoveryName) {
-
-		
-	}
-
-	/**
-	 * Discover the relationships between placeholders 
-	 *
-	 *
-	 */
-	public function discoverRelations(Connection $c) {
-
 	}
 
 }

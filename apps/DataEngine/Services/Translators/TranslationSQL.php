@@ -29,30 +29,34 @@ According to the strategy, it can also create views to avoid data duplication
 
 abstract class TranslationSQL extends BaseService implements InterfaceTranslator {
 
-	protected $_defaultPort = 0;
-
 	/**
 	 * @var $query String
 	 */
 	protected $_query;
-
-	/**
-	 * 
-	 */
-	protected $_fields;
-	protected $_tables;
-	protected $_filters;
-	protected $_clauses;
-	protected $_links;
+	protected $_statement;
+	protected $_preparedFor;
 
 	/**
 	 * @var PdoAdapter    $_connection Internal connection to the SQL database
 	 */
 	protected $_adapter;
 	protected $_connection;
+	protected $_collection;
+	protected $_placeholders;
+	protected $_fields;
+	protected $_filters;
+	protected $_links;
 
 
 	abstract protected function _createAdapter(Connection $c);
+
+
+
+	public function __construct(\Phalcon\Di $di, Connection $c) {
+		$this->_connection = $c;
+		parent::__construct($di);
+	}
+
 
 	
 	/**
@@ -81,41 +85,114 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 	}
 
 
+
+
+
+
 	/**
 	 * Generate the fields part of the query
+	 *
 	 * @param array $fields  An array of Fields objects
-	 * 
+	 * @return string 
 	 */
-	protected function _sql_generate_fields() {
+	protected function _sql_generate_select() {
+
 		$s_select = '';
 		$i_flds = 0;
-		foreach ($this->_fields as $s_alias=>$s_field) {
+		foreach ($this->_fields as $s_alias=>$o_field) {
+
+			$s_field = $this->_transform($o_field);
+
+			// Add to select clause
 			if ($i_flds > 0)
 				$s_select .= ', ';
-			$s_select .= $this->_esc($s_field).' AS '.$this->_esc($s_alias);
+			$s_select .= $s_field;
+
+			if (!empty($s_alias) && $s_field != $s_alias)
+				$s_select .= ' AS '.$s_alias;
 			$i_flds++;
 		}
 
-		return $s_select;
+		return 'SELECT '.$s_select;
 	}
 
 	/**
-	 *
+	 * 
 	 */
-	protected function _sql_generate_tables() {
+	protected function _sql_generate_from() {
 		
-		$i_tbls = 0;
-		foreach ($this->_tables as $s_alias=>$s_name) {
-			if ($i_tbls == 0) {
-				$this->_query .= ' FROM '.$this->_esc($s_name).' AS '.$this->_esc($s_alias);
-			}
-			else {
-				$this->_query .= $this->_sql_generate_join($s_name, $s_alias, 'LEFT');
-			}
+		$s_sqlFrom = '';
+		$o_primaryTable = $this->_collection->getPlaceholderPrimary();
+		$i_primaryTableId = $o_primaryTable->getId();
 
-			$i_tbls++;
+		// Check all placeholders
+		foreach ($this->_placeholders as $i_phId=>$o_ph) {
+
+			$s_path  = $o_ph->path;
+			$s_alias = ($o_ph->alias) ? $o_ph->alias : $o_ph->path;
+
+			// Get the primary field table for FROM clause
+			if ($i_phId == $i_primaryTableId) {
+
+				// Prepend the from before the other parts
+				$s_sqlFrom = ' FROM '.$s_path.' '.$s_sqlFrom;
+
+				// And stop adding more
+				$i_primaryTable = '';
+			}
+			// Non primary tables are joins
+			else {
+				// Append the join after the main table
+				$s_sqlFrom .= $this->_sql_generate_join($o_primaryTable, $o_ph, 'LEFT');
+			}
 		}
 
+		return $s_sqlFrom;
+	}
+
+	/**
+	 * Generate a JOIN clause, using Link elements
+	 *
+	 */
+	protected function _sql_generate_join(Placeholder $phPrimary, Placeholder $ph, $type) {
+
+		$s_join = '';
+		$o_link = Link::findFirst(array(
+			'idPlaceholderSrc = ?0 AND idPlaceholderDst = ?1',
+			'bind' => array($phPrimary->getId(), $ph->getId())
+		));
+
+		if (!$o_link) {
+			throw new \Exception('Unable to find a Link between src="'.$phPrimary->name.'" ('.$phPrimary->getId().') and dst="'.$ph->name.'" ('.$ph->getId().')');
+		}
+
+		switch ($type) {
+
+			case 'LEFT':
+			case 'INNER':
+			case 'OUTER':
+
+				$s_join .= $type.' JOIN '.$ph->path;
+				if (!empty($ph->alias))
+					$s_join .= ' AS '.$ph->alias;
+				$s_join .= ' ON true';
+				
+				// Get all fields from clause
+				foreach ($o_link->getFields() as $i_phSrc=>$i_phDst) {
+					$o_fldSrc = Field::findFirst($i_phSrc);
+					$o_fldDst = Field::findFirst($i_phDst);
+
+					$s_join .= ' AND '.$o_fldSrc->getPlaceholder()->path.'.'.$o_fldSrc->path.' = '.$o_fldDst->getPlaceholder()->path.'.'.$o_fldDst->path.' ';
+				}
+
+				break;
+
+			case 'RIGHT':
+				throw new \Exception('We made the choice to avoid RIGHT JOINs. ');
+				break;
+		}
+
+		return $s_join;
 	}
 
 	/**
@@ -133,12 +210,54 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 		
 	}
 	
+
+	protected function _sql_generate_having() {
+
+	}
+
+
+	protected function _sql_generate_limit() {
+
+	}
+
+
+	/**
+	 *
+	 *
+	 */
+	protected function _sql_generate_insert() {
+		return 'INSERT INTO '.$this->_collection->getPlaceholderPrimary->path;
+	}
+
+	/**
+	 *
+	 *
+	 */
+	protected function _sql_generate_values() {
+		$s_values = 'VALUES ';
+
+		foreach ($this->_fields as $i_fldName=>$o_fld) {
+
+		}
+
+		return $s_values;
+	}
+
+	/**
+	 *
+	 *
+	 */
+	protected function _sql_generate_updates() {
+
+	}
+
 	/**
 	 *
 	 *
 	 */
 	protected function _transform(Field $field) {
-
+		// TODO : create read transformations
+		return $field->getPlaceholder()->path.'.'.$field->path;
 	}
 
 
@@ -160,11 +279,12 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 	 *
 	 */
 	public function testConnection(Connection $c) {
-		return $this->_getAdapter($c)->connect();
+
+		return $this->_getAdapter($c);
 	}
 
 	// ////////////////////////////////////////////////////
-	// Import / Export stubs
+	// Export stubs
 	
 	/**
 	 * Export data from database
@@ -173,25 +293,46 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 	 */
 	public function prepareExport(Collection $coll) {
 
-		// Parse the collection for placeholders
-		foreach ($coll->getPlaceholders() as $s_ph=>$o_ph) {
+		// Check for mutex
+		if (!empty($this->_preparedFor))
+			throw new \Exception("This instance is already prepared for ".$this->_preparedFor);
 
-			// Foreach placeholders
-			$this->_tables[$s_ph];
+
+		$this->_collection = $coll;
+
+		// Process each field of the collection
+		foreach ($coll->getFields() as $o_fld) {
+
+			// Save the field
+			$this->_fields[$o_fld->name] = $o_fld;
+
+			// Find and save the placeholder
+			$o_ph = $o_fld->getPlaceholder();
+			$i_phId = $o_ph->getId();
+
+			if (!isset($this->_placeholders[$i_phId]))
+				$this->_placeholders[$i_phId] = $o_ph;
 		}
 
 		// We got our data, now let's generate this SQL query !
-
-		
 		$this->_query  = 
-				  $this->_sql_generate_fields()	// 1 - Select fields
-			.' '. $this->_sql_generate_tables()	// 2 - From tables
+				  $this->_sql_generate_select()	// 1 - Select fields
+			.' '. $this->_sql_generate_from()	// 2 - From tables
 			.' '. $this->_sql_generate_where()	// 3 - Where Filtering
 			.' '. $this->_sql_generate_group()	// 4 - Grouping
 			.' '. $this->_sql_generate_having()	// 5 - Having
 			.' '. $this->_sql_generate_limit()	// 6 - Limits
 			;
 
+
+		$this->_statement = $this->_getAdapter()->query($this->_query);
+		$this->_statement->setFetchMode(\Phalcon\Db::FETCH_ASSOC);
+
+echo "========= ", $this->_query, " ========";
+
+		$this->_preparedFor = 'export';
+
+		return $this->_statement;
 	}
 
 	/**
@@ -199,13 +340,36 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 	 * 
 	 * @return &Array : row of data
 	 */
-	public function & export() {
-		if (empty($this->s_query))
-			throw new Exception("The export must be prepared before !");
+	public function export() {
+		if (empty($this->_query) || empty($this->_statement))
+			throw new \Exception("The export must be prepared before !");
 
-		return $this->_connection->query();
+		// Return a row
+		return $this->_statement->fetch();
 	}
 
+
+	// ////////////////////////////////////////////////////
+	// Import stubs
+	
+	/**
+	 * 
+	 *
+	 */
+	public function setImportStrategy($strat) {
+		switch ($strat) {
+			case 'copy':
+
+				break;
+			case 'view':
+
+				break;
+
+			default:
+				throw new \Exception('Unknown import strategy "'.$strat.'"');
+				break;
+		}
+	}
 
 	/**
 	 * Import data into database
@@ -213,13 +377,64 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 	 */
 	public function prepareImport(Collection $coll) {
 
-		// Get all elements from 
-		
+		// Check for mutex
+		if (!empty($this->_preparedFor))
+			throw new \Exception("This instance is already prepared for ".$this->_preparedFor);
 
+
+		// Save the collection for sub use
+		$this->_collection = $coll;
+
+		// 
+		// Parsing : Get all elements from collection
+		//
+		foreach ($coll->getFields() as $i_fldId=>$o_fld) {
+			// Save the field
+			$this->_fields[$o_fld->name] = $o_fld;
+
+			// Find and save the placeholder
+			$o_ph = $o_fld->getPlaceholder();
+			$i_phId = $o_ph->getId();
+
+			// Check for only one destination placeholder
+			if ($coll->getPlaceholderPrimaryId() != $i_phId)
+				throw new \Exception('Cannot only import in 1 (primary) placeholder : '.$coll->getPlaceholderPrimary->name.'" != "'.$o_ph->name.'"');
+		}
+
+
+		// 
+		// Query Building
+		// TODO: this kind of query is specific to MySQL...
+		//
+		$this->_query  = 
+				  $this->_sql_generate_insert()		// 1 - INSERT INTO $table
+			.' '. $this->_sql_generate_values()		// 2 - (FIELDS, ...)
+			.' '. $this->_sql_generate_updates()	// 3 - ON DUPLICATE KEY UPDATE
+			;
+
+		// Prepare the insert
+		$this->_statement = $this->_getAdapter()->prepare($this->_query);
+
+		$this->_preparedFor = 'import';
+
+		return $this->_statement;
 	}
 
-
+	/**
+	 *
+	 *
+	 */
 	public function import($data) {
+		print_r($data);
+
+		$this->_adapter->executePrepared($this->_statement, $data);
+	}
+
+	/**
+	 * Multiple arrays at a time
+	 *
+	 */
+	public function importMultiple($datas) {
 
 	}
 }

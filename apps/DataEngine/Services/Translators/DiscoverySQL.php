@@ -110,18 +110,33 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 					// Set base objects
 					$o_ph->path = $s_phpath;
 					$o_ph->name = $s_phname;
+					$o_ph->alias = '';
 					$o_ph->type = 'origin';
 					$o_ph->idConnection = $i_connId;
 
-
-					if (!$o_ph->save()) {
-						$msg = 'Error during save of Placeholder '. $s_phpath."\n";
-						foreach ($o_ph->getMessages() as $message) {
-     						$msg .= $message."\n";
-						}
-						throw new \Exception($msg);
-					}
 				}
+
+				// Get the number of rows in the placeholder
+				/*
+				$o_countRes = $this->_getAdapter($conn)->query('SELECT COUNT(*) FROM '.$s_phpath);
+				$o_countRes->setFetchMode(\Phalcon\Db::FETCH_NUM);
+				$o_ph->rowsCount = $o_countRes->fetch()[0];
+				*/
+				
+				$o_ph->rowsCount = $this->_getAdapter($conn)->fetchColumn('SELECT COUNT(*) FROM '.$s_phpath);
+
+
+
+				// And save the new values
+				if (!$o_ph->save()) {
+					$msg = 'Error during save of Placeholder "'. $s_phpath.'"';
+					foreach ($o_ph->getMessages() as $message) {
+						$msg .= ' : '.$message;
+					}
+					throw new \Exception($msg);
+				}
+
+
 
 				$i_idplaceholder = $o_ph->getId();
 				
@@ -162,7 +177,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 						$o_fld->setPlaceholder($o_ph);
 						$o_fld->path = $s_path;
 						$o_fld->name = $s_path;			// Default: same as path
-						$o_fld->type = 'string';		// Default: string
+						$o_fld->format = 'string';		// Default: string
 						$o_fld->source = 'original';	// Default: golden source
 						$o_fld->attributes = '';		// Default: No attribute
 
@@ -183,7 +198,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 							// Numbers
 							case Column::TYPE_INTEGER:	// 0
 								//$o_fld->addValidation(new ValidatorBetween());
-								$o_fld->type = 'int';
+								$o_fld->format = 'INT('.$i_size.')';
 								break;
 							case Column::TYPE_DECIMAL:	// 3
 								break;
@@ -234,6 +249,8 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 							default:
 								break;
 						}
+
+
 
 
 

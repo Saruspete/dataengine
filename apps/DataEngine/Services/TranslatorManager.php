@@ -11,33 +11,46 @@ class TranslatorManager extends BaseManager {
 	 * Create the models and do the translation
 	 *
 	 */
-	public function getTranslator(Connection $conn) {
-
-		return $this->_createTranslation($conn->type);
-
-	}
-	
-
 	public function translate(Connection $connSrc, Connection $connDst, Collection $collSrc, Collection $collDst) {
 
 		// Get the 2 objects for the translation
-		$o_trSrc = $this->getTranslator($connSrc);
-		$o_trDst = $this->getTranslator($connDst);
+		$o_trSrc = $this->_createTranslation($connSrc);
+		$o_trDst = $this->_createTranslation($connDst);
 
 		// Test the connections
+		if (!$o_trSrc->testConnection($connSrc))
+			throw new \Phalcon\Exception("Unable to connect to Src");
+		if (!$o_trSrc->testConnection($connDst))
+			throw new \Phalcon\Exception("Unable to connect to Dst");
+
 
 		// Check the collection columns validity
+		foreach ($collSrc->getFields() as $o_fldSrc) {
+			
+		}
+
+		// Some strategy checks
+		if ($connSrc->getUid() == $connDst->getUid())
+			$o_trDst->setImportStrategy("view");
 
 		// Prepare the queries
 		$o_trSrc->prepareExport($collSrc);
 		$o_trDst->prepareImport($collDst);
 
-		// And let's go
+
+		// Export rows
+		$i_cnt = 0;
 		while ($a_data = $o_trSrc->export()) {
+
+			// Do the remapping if needed
+			//$this->_applyMap(&$a_data);
+
+			// And import the data
 			$o_trDst->import($a_data);
+			$i_cnt++;
 		}
 
-		return true;
+		return $i_cnt;
 	}
 
 
@@ -46,7 +59,7 @@ class TranslatorManager extends BaseManager {
 	 *
 	 */
 	public function prepare(Connection $cn, Collection $cl) {
-		
+
 	}
 
 	//public function createCollection

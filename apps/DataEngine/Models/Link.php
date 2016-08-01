@@ -35,6 +35,24 @@ class Link extends BaseModel {
 
 	public $linkType;
 
+
+	public function getFields() {
+
+		$a_fields = array();
+		
+		for ($i=0; $i<6; $i++) {
+			$i_src = $this->{'idFieldSrc'.$i};
+			$i_dst = $this->{'idFieldDst'.$i};
+
+			// Skip on empty fields
+			if (empty($i_src) || empty($i_dst))
+				continue;
+
+			$a_fields[$i_src] = $i_dst;
+		}
+
+		return $a_fields;
+	}
 	
 
 }

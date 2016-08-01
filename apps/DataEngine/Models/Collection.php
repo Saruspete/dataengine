@@ -11,35 +11,39 @@ namespace AMPortal\DataEngine\Models;
 
 class Collection extends BaseModel {
 
-	/**
-	 * @Type('integer')
-	 * @Signed(false)
-	 * @PrimaryKey
-	 */
 	private $id;
-
-	/**
-	 * @Type('varchar')
-	 * @
-	 *
-	 */
-	public $name;
-
+	private $idPlaceholderPrimary;
 	
-	private $fields;
+	public $name;
+	public $fields;
 	
 
 	public function initialize() {
-		$this->hasMany('id ', 'AMPortal\DataEngine\Models\Field', 'placeholder_id');
-		$this->hasMany('id', 'AMPortal\DataEngine\Models\Placeholder', 'placeholder_id');
+		//$this->hasMany('id', 'AMPortal\DataEngine\Models\CollectionFields', 'idCollection');
+		
+		// Create the relationship to link Fields through CollectionFields
+		$this->hasManyToMany('id', 'AMPortal\DataEngine\Models\CollectionFields', 'idCollection',
+			'idField', 'AMPortal\DataEngine\Models\Field', 'id',
+			array(
+				'alias'	=> 'Fields',
+			)
+		);
 
+		$this->hasOne('idPlaceholderPrimary', 'AMPortal\DataEngine\Models\Placeholder', 'id', array(
+			'alias'	=> 'PlaceholderPrimary'
+		));
+		
 	}
 
 
-	public function getFields() {
-		return $this->fields;
+	public function getFields($parameters = null) {
+		return $this->getRelated('Fields', $parameters);
 	}
 
+	/**
+	 *
+	 *
+	 */
 	public function addField(Field $field, $replace = false) {
 
 		if (isset($this->fields[$field->name]) ) {
@@ -53,6 +57,10 @@ class Collection extends BaseModel {
 		return $this;
 	}
 
+	/**
+	 * 
+	 * 
+	 */
 	public function addFields($fields, $replace = false) {
 		foreach ($fields as $o_field) {
 			$this->addField($o_field, $replace);
@@ -61,10 +69,31 @@ class Collection extends BaseModel {
 		return $this;
 	}
 
+
+	public function setPlaceholderPrimary(Placeholder $ph) {
+		$this->idPlaceholderPrimary = $ph->getId();
+		return $this;
+	}
+
+	public function getPlaceholderPrimaryId() {
+		return $this->idPlaceholderPrimary;
+	}
+
+	public function getPlaceholderPrimary() {
+		return $this->getRelated('PlaceholderPrimary');
+	}
+
+	/**
+	 * 
+	 * @return Array Array of Placeholders
+	 */
 	public function getPlaceholders() {
 		$a_placeholders = array();
 		foreach ($this->fields as $o_field) {
 			$o_ph = $o_field->getPlaceholder();
-		} 
+			$a_placeholders[$o_ph->getPath()] = $o_ph;
+		}
+
+		return $a_placeholders;
 	}
 }

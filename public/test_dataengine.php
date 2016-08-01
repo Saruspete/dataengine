@@ -80,11 +80,14 @@ ini_set('display_errors', 1);
 //		$collDst = AMPortal\DataEngine\Models\Collection::findFirst(2);
 
 // We'll use the same collection as source and destination, just changing the connection
-		$collSrc = AMPortal\DataEngine\Models\Collection::findFirst(1);
-		$collDst = $collSrc;
 		$connSrc = AMPortal\DataEngine\Models\Connection::findFirst($cid);
 		$connDst = AMPortal\DataEngine\Models\Connection::findFirst($cid);
 		$connDst->resource = "dataengine_test";
+
+		$collSrc = AMPortal\DataEngine\Models\Collection::findFirst(1);
+		$collDst = $collSrc;
+
+//		echo "<pre>", var_dump($collSrc), "</pre>";
 
 		// Translate from source
 		echo "<h1>Translation</h1>";

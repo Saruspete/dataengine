@@ -13,25 +13,33 @@ Attributes:
 
 class Field extends BaseModel {
 	
+	private static $_placeholders = array();
+
 	private $id;
 	private $idPlaceholder;
 	private $dateCreation;
 	private $dateEdit;
 
-	private $_placeholder;
 
 	public $name;
 	public $path;
 	public $charset = "utf8";
 	public $source;
-	public $type;
+	public $format;
+	public $formatSql;
 	public $attributes;
 	public $transformation;
 	public $validators;
 
+	/**
+	 * Magic method for Phalcon
+	 */
 	public function initialize() {
 		$this->belongsTo('placeholderId', 'AMPortal\DataEngine\Models\Placeholder', 'id');
+		//$this->belongsTo('id', 'AMPortal\DataEngine\Models\CollectionFields', 'idField');
 	}
+
+
 
 	public function getId() {
 		return $this->id;
@@ -45,11 +53,19 @@ class Field extends BaseModel {
 	public function getPlaceholder() {
 
 		// Check cache & popuplate if needed
-		if (!$this->_placeholder) {
-			if ($this->idPlaceholder)
-				$this->_placeholder = Placeholder::findFirst($this->idPlaceholder);
+		if (!isset(self::$_placeholders[$this->idPlaceholder])) {
+			if (!$this->idPlaceholder)
+				throw new \Exception("Canniot request placeholder of non saved Placeholder");
+			
+			// Fetch record
+			self::$_placeholders[$this->idPlaceholder] = Placeholder::findFirst($this->idPlaceholder);
+			
 		}
-		return $this->_placeholder;
+		return self::$_placeholders[$this->idPlaceholder];
+	}
+
+	public function getIdPlaceholder() {
+		return $this->idPlaceholder;
 	}
 
 	public function addValidation(Validator $v) {

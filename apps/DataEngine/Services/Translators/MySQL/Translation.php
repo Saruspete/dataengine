@@ -15,11 +15,11 @@ class Translation extends TranslationSQL {
 	use TraitAdapter;
 
 	
-
+/*
 	protected function _transform(Field $field) {
 		
 	}
-
+*/
 	
 
 }

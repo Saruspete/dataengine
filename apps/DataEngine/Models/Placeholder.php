@@ -23,7 +23,9 @@ class Placeholder extends BaseModel {
 	public $name;
 
 	public $path;
+	public $alias;
 	public $type;
+	public $rowsCount;
 	public $sourceUid;
 
 	protected $fields;
@@ -36,6 +38,7 @@ class Placeholder extends BaseModel {
 		$this->hasMany("fields", 'AMPortal\DataEngine\Models\Field', 'idPlaceholder');
 	}
 
+	// Fields management
 	public function addFields($fields) {
 		foreach ($fields as $o_field) {
 			$this->addField($o_field);
