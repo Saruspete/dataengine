@@ -10,7 +10,7 @@ class Connection extends BaseModel {
 	 * @Identity
 	 * @Column(type="integer", nullable=false)
 	 */
-	public $id;
+	private $id;
 
 	/**
 	 * @Column(type="string", size=255)
@@ -31,6 +31,14 @@ class Connection extends BaseModel {
 	public $resource;
 	public $extra;
 
+
+
+
+	public function getId() {
+		return $this->id;
+	}
+
+
 	public function getDsn($format = "PDO") {
 
 		switch ($format) {
@@ -47,7 +55,7 @@ class Connection extends BaseModel {
 				$str = $this->type.'://'
 					. $this->user
 					. ':'.$this->password
-					. '@'.$this->hostname.':'.$this->hostport
+					. '@'.$this->hostname. (($this->hostport) ? ':'.$this->hostport : '')
 					. '/'.$this->resource
 					;
 				break;

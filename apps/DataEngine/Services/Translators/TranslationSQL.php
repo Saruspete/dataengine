@@ -99,7 +99,7 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 
 		$s_select = '';
 		$i_flds = 0;
-		foreach ($this->_fields as $s_alias=>$o_field) {
+		foreach ($this->_fields as $s_name=>$o_field) {
 
 			$s_field = $this->_transform($o_field);
 
@@ -108,8 +108,9 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 				$s_select .= ', ';
 			$s_select .= $s_field;
 
-			if (!empty($s_alias) && $s_field != $s_alias)
-				$s_select .= ' AS '.$s_alias;
+			// Add the alias clause if needed (calculated field, renaming...)
+			if (!empty($s_name) && $s_field != $s_name)
+				$s_select .= ' AS '.$s_name;
 			$i_flds++;
 		}
 
@@ -129,8 +130,7 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 		foreach ($this->_placeholders as $i_phId=>$o_ph) {
 
 			$s_path  = $o_ph->path;
-			$s_alias = ($o_ph->alias) ? $o_ph->alias : $o_ph->path;
-
+			
 			// Get the primary field table for FROM clause
 			if ($i_phId == $i_primaryTableId) {
 
@@ -150,11 +150,13 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 		return $s_sqlFrom;
 	}
 
+
 	/**
 	 * Generate a JOIN clause, using Link elements
 	 *
+	 * @return String
 	 */
-	protected function _sql_generate_join(Placeholder $phPrimary, Placeholder $ph, $type) {
+	protected function _sql_generate_join(Placeholder $phPrimary, Placeholder $ph, $joinType) {
 
 		$s_join = '';
 		$o_link = Link::findFirst(array(
@@ -166,13 +168,13 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 			throw new \Exception('Unable to find a Link between src="'.$phPrimary->name.'" ('.$phPrimary->getId().') and dst="'.$ph->name.'" ('.$ph->getId().')');
 		}
 
-		switch ($type) {
+		switch ($joinType) {
 
 			case 'LEFT':
 			case 'INNER':
 			case 'OUTER':
 
-				$s_join .= $type.' JOIN '.$ph->path;
+				$s_join .= $joinType.' JOIN '.$ph->path;
 				if (!empty($ph->alias))
 					$s_join .= ' AS '.$ph->alias;
 				$s_join .= ' ON true';
@@ -195,6 +197,7 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 		return $s_join;
 	}
 
+
 	/**
 	 *
 	 */
@@ -210,59 +213,45 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 		
 	}
 	
-
+	/**
+	 *
+	 *
+	 */
 	protected function _sql_generate_having() {
 
 	}
 
-
+	/**
+	 *
+	 *
+	 *
+	 */
 	protected function _sql_generate_limit() {
 
 	}
 
 
-	/**
-	 *
-	 *
-	 */
-	protected function _sql_generate_insert() {
-		return 'INSERT INTO '.$this->_collection->getPlaceholderPrimary->path;
-	}
 
 	/**
-	 *
-	 *
-	 */
-	protected function _sql_generate_values() {
-		$s_values = 'VALUES ';
-
-		foreach ($this->_fields as $i_fldName=>$o_fld) {
-
-		}
-
-		return $s_values;
-	}
-
-	/**
-	 *
-	 *
-	 */
-	protected function _sql_generate_updates() {
-
-	}
-
-	/**
-	 *
-	 *
+	 * Transform the queried column if required in field definition
+	 * 
+	 * @return string
 	 */
 	protected function _transform(Field $field) {
-		// TODO : create read transformations
-		return $field->getPlaceholder()->path.'.'.$field->path;
+		
+		$s_fld = $field->getPlaceholder()->path.'.'.$field->path;
+
+		if ($field->transformation)
+			$s_fld = str_replace($field->transformation, "%%FIELD%%", $s_fld);
+
+		return $s_fld;
 	}
 
 
 	// ////////////////////////////////////////////////////////////////////////
-	// Public stubs
+	//
+	// Public
+	// 
 	// ////////////////////////////////////////////////////////////////////////
 	
 
@@ -284,6 +273,7 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 	}
 
 	// ////////////////////////////////////////////////////
+	// 
 	// Export stubs
 	
 	/**
@@ -300,7 +290,9 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 
 		$this->_collection = $coll;
 
+		//
 		// Process each field of the collection
+		//
 		foreach ($coll->getFields() as $o_fld) {
 
 			// Save the field
@@ -314,7 +306,11 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 				$this->_placeholders[$i_phId] = $o_ph;
 		}
 
+		//
 		// We got our data, now let's generate this SQL query !
+		// TODO: Check the query builder :
+		//   https://docs.phalconphp.com/en/latest/api/Phalcon_Mvc_Model_Query_Builder.html
+		//
 		$this->_query  = 
 				  $this->_sql_generate_select()	// 1 - Select fields
 			.' '. $this->_sql_generate_from()	// 2 - From tables
@@ -325,10 +321,13 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 			;
 
 
+		//
+		// Finally, our statement
+		//
 		$this->_statement = $this->_getAdapter()->query($this->_query);
 		$this->_statement->setFetchMode(\Phalcon\Db::FETCH_ASSOC);
 
-echo "========= ", $this->_query, " ========";
+//echo "========= EXPORT : ", $this->_query, " ========";
 
 		$this->_preparedFor = 'export';
 
@@ -341,7 +340,7 @@ echo "========= ", $this->_query, " ========";
 	 * @return &Array : row of data
 	 */
 	public function export() {
-		if (empty($this->_query) || empty($this->_statement))
+		if (empty($this->_statement))
 			throw new \Exception("The export must be prepared before !");
 
 		// Return a row
@@ -349,7 +348,10 @@ echo "========= ", $this->_query, " ========";
 	}
 
 
+
+
 	// ////////////////////////////////////////////////////
+	// 
 	// Import stubs
 	
 	/**
@@ -398,22 +400,40 @@ echo "========= ", $this->_query, " ========";
 
 			// Check for only one destination placeholder
 			if ($coll->getPlaceholderPrimaryId() != $i_phId)
-				throw new \Exception('Cannot only import in 1 (primary) placeholder : '.$coll->getPlaceholderPrimary->name.'" != "'.$o_ph->name.'"');
+				throw new \Exception('Can only import into primary placeholder : '.$coll->getPlaceholderPrimary()->name.'" != "'.$o_ph->name.'"');
+
+			// Add the field to the list
+			$this->_fields[$o_fld->name] = $o_fld;
 		}
 
 
-		// 
-		// Query Building
-		// TODO: this kind of query is specific to MySQL...
-		//
-		$this->_query  = 
-				  $this->_sql_generate_insert()		// 1 - INSERT INTO $table
-			.' '. $this->_sql_generate_values()		// 2 - (FIELDS, ...)
-			.' '. $this->_sql_generate_updates()	// 3 - ON DUPLICATE KEY UPDATE
-			;
+
+		$a_cols = array();
+		foreach ($this->_fields as $s_fldName=>$o_fld) {
+			$a_cols[] = $o_fld->name;
+		}
+
+		// INSERT INTO $table (f1, f2, f3) VALUES (:f1, :f2, :f3)
+		$this->_query = 'INSERT INTO '.$this->_collection->getPlaceholderPrimary()->path
+				.' ('. implode(',',$a_cols) .') VALUES (:'.implode(', :', $a_cols).')';
+
+		// ON DUPLICATE KEY UPDATE
+		$this->_query .= ' ON DUPLICATE KEY UPDATE ';
+		$i_updCnt = 0;
+		foreach ($a_cols as $s_col) {
+			if ($i_updCnt > 0)
+				$this->_query .= ', ';
+
+			$this->_query .= $s_col.' = VALUES('.$s_col.')';
+			$i_updCnt++;
+		}
+
+
 
 		// Prepare the insert
 		$this->_statement = $this->_getAdapter()->prepare($this->_query);
+
+//echo "========= IMPORT : ", $this->_query, " ========";
 
 		$this->_preparedFor = 'import';
 
@@ -427,7 +447,7 @@ echo "========= ", $this->_query, " ========";
 	public function import($data) {
 		print_r($data);
 
-		$this->_adapter->executePrepared($this->_statement, $data);
+	$this->_adapter->executePrepared($this->_statement, $data, array());
 	}
 
 	/**

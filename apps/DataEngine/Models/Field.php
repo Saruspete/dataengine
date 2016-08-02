@@ -26,9 +26,11 @@ class Field extends BaseModel {
 	public $charset = "utf8";
 	public $source;
 	public $format;
+	public $transformation;
+
+	// TODO :
 	public $formatSql;
 	public $attributes;
-	public $transformation;
 	public $validators;
 
 	/**

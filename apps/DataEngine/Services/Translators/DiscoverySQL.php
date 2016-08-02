@@ -71,7 +71,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 
 		$db = $this->_getAdapter($conn);
 		//$s_connUid = $this->getConnectionUid($conn);
-		$i_connId = $conn->id;
+		$i_connId = $conn->getId();
 
 		$a_placeholders = array();
 		$a_bases = array();

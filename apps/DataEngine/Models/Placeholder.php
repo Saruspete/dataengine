@@ -23,7 +23,6 @@ class Placeholder extends BaseModel {
 	public $name;
 
 	public $path;
-	public $alias;
 	public $type;
 	public $rowsCount;
 	public $sourceUid;

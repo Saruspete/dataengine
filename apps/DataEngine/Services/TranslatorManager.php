@@ -25,8 +25,13 @@ class TranslatorManager extends BaseManager {
 
 
 		// Check the collection columns validity
+		$a_fldDst = array();
+		foreach ($collDst->getFields() as $o_fldDst) {
+			$a_fldDst[$o_fldDst->path] = $o_fldDst;
+		}
 		foreach ($collSrc->getFields() as $o_fldSrc) {
-			
+			if (empty($a_fldDst[$o_fldSrc->name]))
+				throw new \Exception('Cannot find destination field for source "'.$o_fldSrc->name.'" ('.$o_fldSrc->getId().')');
 		}
 
 		// Some strategy checks

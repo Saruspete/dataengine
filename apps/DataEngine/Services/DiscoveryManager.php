@@ -18,7 +18,6 @@ class DiscoveryManager extends BaseManager {
 
 		if (!$o_discovery->testConnection($c)) {
 			throw new \Phalcon\Exception("Unable to connect using provided connection");
-			return false;
 		}
 
 		// Call the discovery
