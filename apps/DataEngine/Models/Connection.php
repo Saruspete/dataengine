@@ -1,5 +1,11 @@
 <?php
 
+/**
+ *  This file is part of AMPortal, released under GNU/GPLv3
+ *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.
+ *  Copyright (C) 2016  Adrien Mahieux
+ */
+
 namespace AMPortal\DataEngine\Models;
 
 
@@ -53,7 +59,7 @@ class Connection extends BaseModel {
 			// mysql://root:rootpw@localhost/MyDataBase
 			case 'PEAR':
 				$str = $this->type.'://'
-					. $this->user
+					. $this->username
 					. ':'.$this->password
 					. '@'.$this->hostname. (($this->hostport) ? ':'.$this->hostport : '')
 					. '/'.$this->resource

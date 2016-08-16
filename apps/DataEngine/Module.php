@@ -1,60 +1,53 @@
 <?php
 
+/**
+ *  This file is part of AMPortal, released under GNU/GPLv3
+ *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.
+ *  Copyright (C) 2016  Adrien Mahieux
+ */
+
 namespace AMPortal\DataEngine;
 
+use Phalcon\DiInterface;
 use Phalcon\Loader;
-use Phalcon\Mvc\View;
-use Phalcon\Db\Adapter\Pdo\Mysql as DbAdapter;
 use Phalcon\Mvc\ModuleDefinitionInterface;
 
-class Module implements ModuleDefinitionInterface {
+
+class Module implements ModuleDefinitionInterface
+{
     /**
-     * Registers the module auto-loader
+     * Registers an autoloader related to the module
+     *
+     * @param DiInterface $di
      */
-    public function registerAutoloaders(\Phalcon\DiInterface $di = NULL) {
+    public function registerAutoloaders(DiInterface $di = null)
+    {
 
         $loader = new Loader();
 
-        $loader->registerNamespaces(array(
-            'AMPortal\DataEngine'   => __DIR__ . '/',
-        ));
+        $loader->registerNamespaces([
+            'AMPortal\DataEngine' => __DIR__.'/',
+        ]);
 
         $loader->register();
-
     }
 
     /**
-     * Registers the module-only services
+     * Registers services related to the module
      *
-     * @param Phalcon\DI $di
+     * @param DiInterface $di
      */
-    public function registerServices(\Phalcon\DiInterface $di = NULL) {
+    public function registerServices(DiInterface $di)
+    {
         /**
          * Read configuration
          */
-        $config = include __DIR__ . "/../../config/config.dataengine.php";
+        $config = include __DIR__ . "/config/config.php";
+        
+        // Reconfigure the view to use common templates
+        $di->getShared('view')
+            ->setViewsDir($config->application->viewsDir)
+            ->setLayoutsDir($config->application->layoutsDir);
 
-        /**
-         * Setting up the view component
-         */
-        $di['view'] = function () {
-            $view = new View();
-            $view->setViewsDir(__DIR__ . '/views/');
-
-            return $view;
-        };
-
-        /**
-         * Database connection is created based in the parameters defined in the configuration file
-         */
-        $di['db'] = function () use ($config) {
-            return new DbAdapter(array(
-                "host" => $config->database->host,
-                "username" => $config->database->username,
-                "password" => $config->database->password,
-                "dbname" => $config->database->dbname
-            ));
-        };
     }
-
 }

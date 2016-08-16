@@ -327,8 +327,6 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 		$this->_statement = $this->_getAdapter()->query($this->_query);
 		$this->_statement->setFetchMode(\Phalcon\Db::FETCH_ASSOC);
 
-//echo "========= EXPORT : ", $this->_query, " ========";
-
 		$this->_preparedFor = 'export';
 
 		return $this->_statement;
@@ -337,7 +335,7 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 	/**
 	 * Execute the prepared export
 	 * 
-	 * @return &Array : row of data
+	 * @return Array : row of data
 	 */
 	public function export() {
 		if (empty($this->_statement))
@@ -433,7 +431,6 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 		// Prepare the insert
 		$this->_statement = $this->_getAdapter()->prepare($this->_query);
 
-//echo "========= IMPORT : ", $this->_query, " ========";
 
 		$this->_preparedFor = 'import';
 
@@ -445,9 +442,22 @@ abstract class TranslationSQL extends BaseService implements InterfaceTranslator
 	 *
 	 */
 	public function import($data) {
-		print_r($data);
 
-	$this->_adapter->executePrepared($this->_statement, $data, array());
+		try {
+
+			$this->_adapter->executePrepared($this->_statement, $data, array());
+
+		} catch (\PDOException $e) {
+			echo '<strong>This dataset is invalid</strong> : <u>', $e->getMessage(), '</u>';
+			echo '<pre>', print_r($data, true), '</pre>';
+			return false;
+		} catch (\Exception $e) {
+			echo '<strong>An unhandled error occured</strong> : <u>', $e->getMessage(), '</u>';
+			echo '<pre>', print_r($data, true), '</pre>';
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

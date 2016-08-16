@@ -1,5 +1,11 @@
 <?php
 
+/**
+ *  This file is part of AMPortal, released under GNU/GPLv3
+ *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.
+ *  Copyright (C) 2016  Adrien Mahieux
+ */
+
 namespace AMPortal\DataEngine\Services;
 
 use Phalcon\Di;
@@ -19,10 +25,8 @@ class BaseService {
 
 	public function __construct(Di $di = null) {
 		$this->_di = $di;
-		//echo "Roflmao from ", get_class($this),"\n<br />";
+		
 		return $this;
 	}
-
-
 
 }

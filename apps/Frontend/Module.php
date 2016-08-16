@@ -1,65 +1,47 @@
 <?php
-namespace Modules\Modules\Frontend;
 
+/**
+ *  This file is part of AMPortal, released under GNU/GPLv3
+ *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.
+ *  Copyright (C) 2016  Adrien Mahieux
+ */
+
+namespace AMPortal\Frontend;
+
+use Phalcon\DiInterface;
 use Phalcon\Loader;
 use Phalcon\Mvc\View;
-use Phalcon\Db\Adapter\Pdo\Mysql as DbAdapter;
 use Phalcon\Mvc\ModuleDefinitionInterface;
 
-class Module implements ModuleDefinitionInterface
-{
-    /**
-     * Registers the module auto-loader
-     */
-    public function registerAutoloaders()
-    {
 
-        $loader = new Loader();
+class Module implements ModuleDefinitionInterface {
+	/**
+	 * Registers an autoloader related to the module
+	 *
+	 * @param DiInterface $di
+	 */
+	public function registerAutoloaders(DiInterface $di = null) {
 
-        $loader->registerNamespaces(array(
-            'Modules\Modules\Frontend\Controllers' => __DIR__ . '/controllers/',
-            'Modules\Models\Entities' => __DIR__ . '/../../models/entities/',
-            'Modules\Models\Services' => __DIR__ . '/../../models/services/',
-            'Modules\Models\Repositories' => __DIR__ . '/../../models/repositories/'
-        ));
+		$loader = new Loader();
 
-        $loader->register();
-    }
+		$loader->registerNamespaces([
+			'AMPortal\Frontend' => __DIR__.'/',
+		]);
 
-    /**
-     * Registers the module-only services
-     *
-     * @param Phalcon\DI $di
-     */
-    public function registerServices($di)
-    {
-        /**
-         * Read configuration
-         */
-        $config = include __DIR__ . "/../../config/config.php";
+		$loader->register();
+	}
 
-        /**
-         * Setting up the view component
-         */
-        $di['view'] = function () {
-            $view = new View();
-            $view->setViewsDir(__DIR__ . '/views/');
+	/**
+	 * Registers services related to the module
+	 *
+	 * @param DiInterface $di
+	 */
+	public function registerServices(DiInterface $di) {
+		/**
+		 * Read configuration
+		 */
+		//$config = include APP_PATH . "/apps/DataEngine/config/config.php";
 
-            return $view;
-        };
 
-        /**
-         * Database connection is created based in the parameters defined in the configuration file
-         */
-        $di['db'] = function () use ($config) {
-            return new DbAdapter(array(
-                "host" => $config->database->host,
-                "username" => $config->database->username,
-                "password" => $config->database->password,
-                "dbname" => $config->database->dbname
-            ));
-        };
-
-    }
-
+	}
 }

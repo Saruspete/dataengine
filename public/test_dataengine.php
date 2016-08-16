@@ -1,7 +1,13 @@
 <?php
 
+/**
+ *  This file is part of AMPortal, released under GNU/GPLv3
+ *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.
+ *  Copyright (C) 2016  Adrien Mahieux
+ */
+
 // Simple access to test the dataengine
-use Phalcon\Mvc\Micro;
+use Phalcon\Mvc\Application;
 use Phalcon\Loader;
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Db\Adapter\Pdo\Mysql;
@@ -15,12 +21,6 @@ ini_set('display_errors', 1);
 //try {
 
 	$loader = new Loader();
-	
-	/*
-	$loader->registerDirs(array(
-		__DIR__.'/../apps/',
-	))->register();
-	*/
 
 	$loader->registerNamespaces(array(
 		'AMPortal'	=> __DIR__.'/../apps/',
@@ -31,8 +31,7 @@ ini_set('display_errors', 1);
 	$debug->listen();
 
 
-	// Micro application instance
-	$app = new Micro();
+	$app = new Application();
 
 	// Dependency Injection
 	$di = new FactoryDefault();
@@ -48,6 +47,13 @@ ini_set('display_errors', 1);
 	$di->setShared('de_trstmgr', function() use ($di) {
 		return new \AMPortal\DataEngine\Services\TranslatorManager($di);
 	});
+
+	$di->setShared('view', function () {
+    	$view = new \Phalcon\Mvc\View\Simple();
+    	$view->setViewsDir('../apps/DataEngine/Views/');
+    	return $view;
+	});
+
 
 	// DB Profiler
 	$di->setShared('dbProfiler', function () {
@@ -97,16 +103,16 @@ ini_set('display_errors', 1);
 		return $connection;
 	});
 
+
+
+
+
 	// ////////////////////////////////////////////
 	// HTTP Routes
 
-	$app->get('/', function() {
-		echo "DataEngine test index page. Test links :<br /><ul>";
-		echo '<li><a href="/testde/discover/list">/discover/list</a> : List connections already used for discovery</li>';
-		echo '<li><a href="/testde/discover/1">/discover/[0-9]+</a> : Use an existing connection</li>';
-		echo '<li><a href="/testde/discover/host/user/pass/base">/discover/$host/$user/$pass[/$base]</a> : Discover a database from URL provided data</li>';
-		echo '<li><a href="/testde/translate/1">/translate/1</a> : Translate Collections</li>';
-		echo '</ul>';
+	$app->get('/', function() use ($di) {
+
+		
 	});
 
 	// Discovery list
@@ -174,42 +180,6 @@ ini_set('display_errors', 1);
 
 
 
-
-	// Translation test
-	$app->get('/translate/{cid:[0-9]+}', function($cid) use ($app, $di) {
-
-//		$collSrc = AMPortal\DataEngine\Models\Collection::findFirst(1);
-//		$collDst = AMPortal\DataEngine\Models\Collection::findFirst(2);
-
-// We'll use the same collection as source and destination, just changing the connection
-		$connSrc = AMPortal\DataEngine\Models\Connection::findFirst($cid);
-		$connDst = AMPortal\DataEngine\Models\Connection::findFirst($cid);
-		$connDst->resource = "dataengine_test";
-
-		$collSrc = AMPortal\DataEngine\Models\Collection::findFirst(1);
-		$collDst = AMPortal\DataEngine\Models\Collection::findFirst(2);
-
-//		echo "<pre>", var_dump($collSrc), "</pre>";
-
-		// Translate from source
-		echo "<h1>Translation</h1>";
-		$app['de_trstmgr']->translate($connSrc, $connDst, $collSrc, $collDst);
-
-/*
-		// Get the generated profiles from the profiler
-		$profiles = $di->get('dbProfiler')->getProfiles();
-
-		foreach ($profiles as $profile) {
-			echo "SQL Statement: ", $profile->getSQLStatement(), "\n";
-			echo "Start Time: ", $profile->getInitialTime(), "\n";
-			echo "Final Time: ", $profile->getFinalTime(), "\n";
-			echo "Total Elapsed Time: ", $profile->getTotalElapsedSeconds(), "\n";
-		}
-*/
-
-	});
-	
-
 	$app->notFound(function () use ($app) {
 		$app->response->setStatusCode(404, "Not Found")->sendHeaders();
 		echo "This is crazy, but this page was not found!<br />";
@@ -221,7 +191,29 @@ ini_set('display_errors', 1);
 	});
 
 
+
+
+	echo '<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <title>Phalcon PHP Framework</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    </head>
+    <body>
+        <div class="container">';
 	$app->handle();
+	echo '</div>
+        <!-- jQuery (necessary for Bootstraps JavaScript plugins) -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    </body>
+</html>';
+
 
 // Commented out for Phalcon\Debug purpose
 /*

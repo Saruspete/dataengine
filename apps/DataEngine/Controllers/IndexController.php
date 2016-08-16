@@ -1,19 +1,18 @@
 <?php
 
+/**
+ *  This file is part of AMPortal, released under GNU/GPLv3
+ *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.
+ *  Copyright (C) 2016  Adrien Mahieux
+ */
+
 namespace AMPortal\DataEngine\Controllers;
 
-//use AMPortal\DataEngine\Services\Services as Services;
+class IndexController extends ControllerBase {
 
-class IndexController extends BaseController
-{
+	public function indexAction() {
 
-    public function indexAction() {
-        try {
-        	//$this->view->workflows = Services::getService('Workflows')->getAll();
-            echo "lol";
-        } catch (\Exception $e) {
-        	$this->flash->error($e->getMessage());
-        }
-    }	
+	}
+
 }
 

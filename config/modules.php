@@ -1,18 +1,21 @@
 <?php
+
+/**
+ *  This file is part of AMPortal, released under GNU/GPLv3
+ *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.
+ *  Copyright (C) 2016  Adrien Mahieux
+ */
+
 /**
  * Register application modules
  */
-
 $application->registerModules(array(
-    // Frontend for framework
-    'frontend' => array(
-        'className' => 'Modules\Modules\Frontend\Module',
-        'path' => __DIR__ . '/../apps/frontend/Module.php'
-    ),
-
-    // Data Engine 
-    'dataengine' => array(
-        'className' => 'AMPortal\DataEngine',
-        'path'      => __DIR__ . '/../apps/dataengine/Module.php',
+	'Frontend'	=> array(
+		'className'	=> 'AMPortal\Frontend\Module',
+		'path'		=> __DIR__ . '/../apps/Frontend/Module.php'
+	),
+    'DataEngine' => array(
+        'className'	=> 'AMPortal\DataEngine\Module',
+        'path'		=> __DIR__ . '/../apps/DataEngine/Module.php'
     ),
 ));
