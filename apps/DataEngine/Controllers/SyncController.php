@@ -18,10 +18,12 @@ class SyncController extends ControllerBase {
 
 
 	public function newsyncAction() {
-		
+
 	}
 
-	public function syncAction($cnSrc, $cnDst, $clSrc, $clDst) {
+	public function syncAction() {
+
+		$cnSrc, $cnDst, $clSrc, $clDst
 
 		$connSrc = AMPortal\DataEngine\Models\Connection::findFirst($cnSrc);
 		$connDst = AMPortal\DataEngine\Models\Connection::findFirst($cnDst);
