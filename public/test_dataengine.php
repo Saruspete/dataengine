@@ -7,7 +7,7 @@
  */
 
 // Simple access to test the dataengine
-use Phalcon\Mvc\Application;
+use Phalcon\Mvc\Micro;
 use Phalcon\Loader;
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Db\Adapter\Pdo\Mysql;
@@ -21,6 +21,12 @@ ini_set('display_errors', 1);
 //try {
 
 	$loader = new Loader();
+	
+	/*
+	$loader->registerDirs(array(
+		__DIR__.'/../apps/',
+	))->register();
+	*/
 
 	$loader->registerNamespaces(array(
 		'AMPortal'	=> __DIR__.'/../apps/',
@@ -31,7 +37,8 @@ ini_set('display_errors', 1);
 	$debug->listen();
 
 
-	$app = new Application();
+	// Micro application instance
+	$app = new Micro();
 
 	// Dependency Injection
 	$di = new FactoryDefault();
@@ -112,7 +119,12 @@ ini_set('display_errors', 1);
 
 	$app->get('/', function() use ($di) {
 
-		
+		echo "DataEngine test index page. Test links :<br /><ul>";
+		echo '<li><a href="/testde/discover/list">/discover/list</a> : List connections already used for discovery</li>';
+		echo '<li><a href="/testde/discover/1">/discover/[0-9]+</a> : Use an existing connection</li>';
+		echo '<li><a href="/testde/discover/host/user/pass/base">/discover/$host/$user/$pass[/$base]</a> : Discover a database from URL provided data</li>';
+		echo '<li><a href="/testde/translate/1">/translate/1</a> : Translate Collections</li>';
+		echo '</ul>';
 	});
 
 	// Discovery list
@@ -178,7 +190,46 @@ ini_set('display_errors', 1);
 
 	});
 
+	// 
+	$app->get('/wizzard', function() {
 
+	});
+
+	$app->get('/wizzard/binding/', function() {
+
+
+	});
+
+
+	// Translation test
+	$app->get('/translate/{cnSrc:[0-9]+}/{cnDst:[0-9]+}/{clSrc:[0-9]+}/{clDst:[0-9]+}', function($cnSrc, $cnDst, $clSrc, $clDst) use ($app, $di) {
+
+		$connSrc = AMPortal\DataEngine\Models\Connection::findFirst($cnSrc);
+		$connDst = AMPortal\DataEngine\Models\Connection::findFirst($cnDst);
+
+		$collSrc = AMPortal\DataEngine\Models\Collection::findFirst($clSrc);
+		$collDst = AMPortal\DataEngine\Models\Collection::findFirst($clDst);
+
+//		echo "<pre>", var_dump($collSrc), "</pre>";
+
+		// Translate from source
+		echo "<h1>Translation</h1>";
+		$app['de_trstmgr']->translate($connSrc, $connDst, $collSrc, $collDst);
+
+/*
+		// Get the generated profiles from the profiler
+		$profiles = $di->get('dbProfiler')->getProfiles();
+
+		foreach ($profiles as $profile) {
+			echo "SQL Statement: ", $profile->getSQLStatement(), "\n";
+			echo "Start Time: ", $profile->getInitialTime(), "\n";
+			echo "Final Time: ", $profile->getFinalTime(), "\n";
+			echo "Total Elapsed Time: ", $profile->getTotalElapsedSeconds(), "\n";
+		}
+*/
+
+	});
+	
 
 	$app->notFound(function () use ($app) {
 		$app->response->setStatusCode(404, "Not Found")->sendHeaders();
