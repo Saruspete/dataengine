@@ -36,6 +36,7 @@ $di->setShared('router', function () {
 
 	$router->setDefaultModule('Frontend');
 	$router->setDefaultNamespace('AMPortal\Frontend\Controllers');
+	$router->setDefaultController('index');
 
 	return $router;
 });

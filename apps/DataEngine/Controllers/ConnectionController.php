@@ -8,11 +8,16 @@
 
 namespace AMPortal\DataEngine\Controllers;
 
-class IndexController extends ControllerBase {
+class ConnectionController extends ControllerBase {
 
 	public function indexAction() {
-		echo "!!!!!";
+
 	}
+
+	public function listAction() {
+		
+	}
+
 
 }
 

@@ -40,7 +40,11 @@ class Placeholder extends BaseModel {
 	}
 
 	public function initialize() {
-		$this->hasMany("fields", 'AMPortal\DataEngine\Models\Field', 'idPlaceholder');
+
+		$this->hasMany("id", 'AMPortal\DataEngine\Models\Field', 'idPlaceholder', array(
+				'alias'	=> 'Fields'
+		));
+
 	}
 
 	// Fields management
@@ -58,5 +62,9 @@ class Placeholder extends BaseModel {
 
 	public function getField($fieldPath) {
 		return $this->fields[$fieldPath];
+	}
+
+	public function getFields($parameters = null) {
+		return $this->getRelated('Fields', $parameters);
 	}
 }

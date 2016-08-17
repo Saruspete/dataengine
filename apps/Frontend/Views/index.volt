@@ -8,6 +8,8 @@
         {{ get_title() }}
         {{ stylesheet_link('css/bootstrap.min.css') }}
         {{ stylesheet_link('css/bootstrap.theme.min.css') }}
+        {{ assets.outputCss('header') }}
+        
     </head>
     <body>
         <nav class="navbar navbar-default navbar-inverse" role="navigation">
@@ -34,10 +36,8 @@
         </footer>
         </div>
 
-        {{ javascript_include('js/jquery.min.js') }}
+        {{ javascript_include('js/jquery-3.1.0.min.js') }}
         {{ javascript_include('js/bootstrap.min.js') }}
-        {{ javascript_include('js/themes/grid-light.js') }}
-        {{ javascript_include('js/selectlists.js') }}
-        {{ javascript_include('js/bootstrap-editable.min.js') }}
+        {{ assets.outputJs('footer') }}
     </body>
 </html>
