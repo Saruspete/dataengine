@@ -25,12 +25,12 @@ class CollectionController extends ControllerBase {
 	 */
 	public function editorAction() {
 		// Add header CSS
-		$this->assets->collection('header')
+		$this->assets
 			->addCss('css/multiselect.css')
 			->addCss('css/select2.min.css');
 
 		// Add footer JS
-		$this->assets->collection('footer')
+		$this->assets
 			->addJs('js/multiselect.js')
 			->addJs('js/select2.min.js')
 			->addJs('js/DataEngine-Collection-editor.js');

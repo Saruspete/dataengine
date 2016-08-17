@@ -32,7 +32,7 @@ jQuery(document).ready(function($) {
 			var opt = $("<option></option>")
 				.text(data.name)
 				.val(data.id);
-			$("#collection").append(ph);
+			$("#collection").append(opt);
 		});
 
 		// Required due to https://github.com/select2/select2/issues/4104

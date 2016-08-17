@@ -8,7 +8,7 @@
         {{ get_title() }}
         {{ stylesheet_link('css/bootstrap.min.css') }}
         {{ stylesheet_link('css/bootstrap.theme.min.css') }}
-        {{ assets.outputCss('header') }}
+        {{ assets.outputCss() }}
         
     </head>
     <body>
@@ -38,6 +38,6 @@
 
         {{ javascript_include('js/jquery-3.1.0.min.js') }}
         {{ javascript_include('js/bootstrap.min.js') }}
-        {{ assets.outputJs('footer') }}
+        {{ assets.outputJs() }}
     </body>
 </html>

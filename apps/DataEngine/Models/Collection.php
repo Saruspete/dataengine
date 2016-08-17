@@ -42,6 +42,10 @@ class Collection extends BaseModel {
 	}
 
 
+	public function getId() {
+		return $this->id;
+	}
+
 	public function getFields($parameters = null) {
 		return $this->getRelated('Fields', $parameters);
 	}
