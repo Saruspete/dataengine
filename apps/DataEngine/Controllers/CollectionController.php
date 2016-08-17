@@ -10,6 +10,7 @@ namespace AMPortal\DataEngine\Controllers;
 
 use Phalcon\Mvc\View;
 use AMPortal\DataEngine\Models\Placeholder;
+use AMPortal\DataEngine\Models\Collection;
 use AMPortal\DataEngine\Models\Field;
 
 class CollectionController extends ControllerBase {
@@ -25,11 +26,13 @@ class CollectionController extends ControllerBase {
 	public function editorAction() {
 		// Add header CSS
 		$this->assets->collection('header')
-			->addCss('css/multiselect.css');
+			->addCss('css/multiselect.css')
+			->addCss('css/select2.min.css');
 
 		// Add footer JS
 		$this->assets->collection('footer')
 			->addJs('js/multiselect.js')
+			->addJs('js/select2.min.js')
 			->addJs('js/DataEngine-Collection-editor.js');
 
 	}
@@ -37,7 +40,7 @@ class CollectionController extends ControllerBase {
 	/**
 	 * 
 	 */
-	public function editorAjaxLoadAction() {
+	public function editorAjaxGetPlaceholdersAction() {
 		$this->view->setRenderLevel(View::LEVEL_NO_RENDER);
 
 		$a_results = array();
@@ -47,7 +50,7 @@ class CollectionController extends ControllerBase {
 		$i = 0;
 		foreach ($a_placeholders as $o_ph) {
 
-			$i_phid = (int)$o_ph->getId();
+			$i_phid = $o_ph->getId();
 
 			// Need this, because json_encode requires sequential elements
 			// Else, it's output as object instead of array
@@ -76,6 +79,25 @@ class CollectionController extends ControllerBase {
 
 		echo json_encode($a_results);
 	}
+
+	public function editorAjaxGetCollectionsAction() {
+		$this->view->setRenderLevel(View::LEVEL_NO_RENDER);
+
+		$a_results = array();
+
+		$a_collections = Collection::find();
+		foreach ($a_collections as $o_cl) {
+			$i_clid = $o_cl->getId();
+
+			$a_results[] = array(
+				'id'	=> $i_clid,
+				'name'	=> $o_cl->name,
+			);
+		}
+
+		echo json_encode($a_results);
+	}
+
 
 	public function editorAddAction() {
 
