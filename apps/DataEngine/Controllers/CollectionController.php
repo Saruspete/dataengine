@@ -293,7 +293,7 @@ class CollectionController extends ControllerBase {
 		$host = $a_hostdata[0];
 		$port = (!empty($a_hostdata[1])) ? $a_hostdata[1] : 0; 
 
-		$cn = new Connection($i_cnId);
+		$cn = new Connection();
 		$cn->name = $a_vars['Name'];
 		$cn->type = $a_vars['Type'];
 		$cn->hostname = $host;

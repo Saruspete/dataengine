@@ -39,6 +39,8 @@ function globals_get($feature) {
 	return false;
 }
 
+require __DIR__.'/MSSQLDialect.php';
+
 
 class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 
