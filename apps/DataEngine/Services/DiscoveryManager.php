@@ -33,4 +33,13 @@ class DiscoveryManager extends BaseManager {
 		return true;
 	}
 
+	/**
+	 * 
+	 * @return array The list of placeholders
+	 */
+	public function testConnection(Connection $c) {
+		$o_discovery = $this->_createDiscovery($c);
+		return $o_discovery->testConnection($c);
+	}
+
 }

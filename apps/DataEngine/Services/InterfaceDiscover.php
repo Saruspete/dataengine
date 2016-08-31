@@ -8,6 +8,15 @@
 
 namespace AMPortal\DataEngine\Services;
 
+use AMPortal\DataEngine\Models\Connection;
+
 interface InterfaceDiscover {
 	
+	public function getConnectionUid(Connection $cn);
+	public function testConnection(Connection $cn);
+
+	public function discoverStructure(Connection $cn, $shallUpdate = false);
+	public function discoverRelations(Connection $cn);
+
+
 }

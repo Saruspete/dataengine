@@ -4,12 +4,20 @@
 		"selected_items":
 		[
 			[
-				"boot",
-				"bootstrap-editable.min.js"
+				"_disc",
+				"_discoverTestConnection〔function〕"
+			],
+			[
+				"_discover",
+				"_discoverGetConnectionFromPost〔function〕"
 			],
 			[
 				"sele",
-				"selectlists.js"
+				"select2.min.js"
+			],
+			[
+				"boot",
+				"bootstrap-editable.min.js"
 			],
 			[
 				"bootstr",
@@ -87,16 +95,40 @@
 			"file": "apps/DataEngine/Services/WorkflowManager.php",
 			"settings":
 			{
-				"buffer_size": 227,
+				"buffer_size": 225,
 				"line_ending": "Unix",
 				"name": "<?php"
+			}
+		},
+		{
+			"file": "apps/DataEngine/config/config.php",
+			"settings":
+			{
+				"buffer_size": 559,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "apps/DataEngine/Module.php",
+			"settings":
+			{
+				"buffer_size": 1204,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "apps/Frontend/Controllers/IndexController.php",
+			"settings":
+			{
+				"buffer_size": 343,
+				"line_ending": "Unix"
 			}
 		},
 		{
 			"file": "apps/DataEngine/Services/TranslatorManager.php",
 			"settings":
 			{
-				"buffer_size": 1861,
+				"buffer_size": 1859,
 				"line_ending": "Unix",
 				"name": "<?php"
 			}
@@ -105,7 +137,50 @@
 			"file": "apps/Frontend/Module.php",
 			"settings":
 			{
-				"buffer_size": 920,
+				"buffer_size": 918,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "config/modules.php",
+			"settings":
+			{
+				"buffer_size": 539,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "config/routes.php",
+			"settings":
+			{
+				"buffer_size": 989,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "config/services.php",
+			"settings":
+			{
+				"buffer_size": 3765,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "public/index.php",
+			"settings":
+			{
+				"buffer_size": 1212,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "<?php\n\n/**\n *  This file is part of AMPortal, released under GNU/GPLv3\n *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.\n *  Copyright (C) 2016  Adrien Mahieux\n */\n\n// Simple access to test the dataengine\nuse Phalcon\\Mvc\\Micro;\nuse Phalcon\\Loader;\nuse Phalcon\\Di\\FactoryDefault;\nuse Phalcon\\Db\\Adapter\\Pdo\\Mysql;\nuse Phalcon\\Db\\Profiler as DbProfiler;\nuse Phalcon\\Logger\\Adapter\\File as Logger;\nuse Phalcon\\Events\\Manager as EventsManager;\n\nerror_reporting(E_ALL);\nini_set('display_errors', 1);\n\n//try {\n\n	$loader = new Loader();\n	\n	/*\n	$loader->registerDirs(array(\n		__DIR__.'/../apps/',\n	))->register();\n	*/\n\n	$loader->registerNamespaces(array(\n		'AMPortal'	=> __DIR__.'/../apps/',\n	))->register();\n\n	// The debug instance need try/catch to be removed\n	$debug = new \\Phalcon\\Debug();\n	$debug->listen();\n\n\n	// Micro application instance\n	$app = new Micro();\n\n	// Dependency Injection\n	$di = new FactoryDefault();\n	$app->setDi($di);\n\n\n	// Discovery Manager\n	$di->setShared('de_discmgr', function() use ($di) {\n		return new \\AMPortal\\DataEngine\\Services\\DiscoveryManager($di);\n	});\n\n	// Translator Manager\n	$di->setShared('de_trstmgr', function() use ($di) {\n		return new \\AMPortal\\DataEngine\\Services\\TranslatorManager($di);\n	});\n\n	$di->setShared('view', function () {\n    	$view = new \\Phalcon\\Mvc\\View\\Simple();\n    	$view->setViewsDir('../apps/DataEngine/Views/');\n    	return $view;\n	});\n\n\n	// DB Profiler\n	$di->setShared('dbProfiler', function () {\n		return new DbProfiler();\n	});\n\n	// DB handler\n	$di->setShared('db', function() use ($app, $di) {\n\n		$connection = new Phalcon\\Db\\Adapter\\Pdo\\MySQL(\n			array(\n				'host'		=> \"localhost\",\n				'username'	=> 'root',\n				'password'	=> 'PouetCoinLol',\n				'dbname'	=> 'dataengine',\n			)\n		);\n\n		$eventsManager = new EventsManager();\n		$profiler      = $di->getDbProfiler();\n		$logger        = new Logger( __DIR__ .\"/../../logs/app/db.log\");\n\n    	// Listen all the database events\n		$eventsManager->attach('db', function($event, $connection) use ($logger, $profiler) {\n			if ($event->getType() == 'beforeQuery') {\n\n				// Profiler\n				$profiler->startProfile($connection->getSQLStatement());\n\n				// Logger\n				$sqlVariables = $connection->getSQLVariables();\n				if (count($sqlVariables)) {\n					$logger->info($connection->getSQLStatement() . ' ' . join(', ', $sqlVariables));\n				} else {\n					$logger->info($connection->getSQLStatement());\n				}\n			}\n\n			if ($event->getType() == 'afterQuery') {\n				$profiler->stopProfile();\n			}\n		});\n\n		//Assign the eventsManager to the db adapter instance\n		$connection->setEventsManager($eventsManager);\n\n		return $connection;\n	});\n\n\n\n\n\n	// ////////////////////////////////////////////\n	// HTTP Routes\n\n	$app->get('/', function() use ($di) {\n\n		echo \"DataEngine test index page. Test links :<br /><ul>\";\n		echo '<li><a href=\"/testde/discover/list\">/discover/list</a> : List connections already used for discovery</li>';\n		echo '<li><a href=\"/testde/discover/1\">/discover/[0-9]+</a> : Use an existing connection</li>';\n		echo '<li><a href=\"/testde/discover/host/user/pass/base\">/discover/$host/$user/$pass[/$base]</a> : Discover a database from URL provided data</li>';\n		echo '<li><a href=\"/testde/translate/1\">/translate/1</a> : Translate Collections</li>';\n		echo '</ul>';\n	});\n\n	// Discovery list\n	$app->get('/discover/list', function() use ($app) {\n\n		// Target database to discover\n		$a_conns = \\AMPortal\\DataEngine\\Models\\Connection::find();\n\n		echo '<h1>Connections listing</h1>';\n		echo '<table><tr>';\n		echo '<th>Host</th><th>User</th><th>Pass</th><th>Base</th><th>Test</th>';\n		echo '</tr>';\n\n		foreach ($a_conns as $o_conn) {\n			echo '<tr>',\n				'<td>', $o_conn->hostname, '</td>',\n				'<td>', $o_conn->username, '</td>',\n				'<td>', $o_conn->password, '</td>',\n				'<td>', $o_conn->resource, '</td>',\n				'<td><a href=\"/testde/discover/', $o_conn->getId(),'\">Test</a></td>',\n				'</tr>';\n		}\n\n	});\n\n	// Discover user provided credentials\n	$app->get('/discover/{host}/{user}/{pass}/{base}', function($host, $user, $pass, $base = false) use ($app) {\n\n		// Target database to discover\n		$conn = \\AMPortal\\DataEngine\\Models\\Connection::findFirst(array(\n			'hostname=\"'.$host.'\" AND username=\"'.$user.'\" AND password=\"'.$pass.'\" AND resource=\"'.$base.'\"'\n		));\n\n		if ($conn) {\n			echo 'This connection is already registered. Please go to <a href=\"/testde/discover/', $conn->getId(),'\">discover/', $conn->getId(),'</a>';\n\n		}\n		else {\n		\n			$conn = new \\AMPortal\\DataEngine\\Models\\Connection();\n			$conn->type = 'MySQL';\n			$conn->hostname = $host;\n			$conn->username = $user;\n			$conn->password = $pass;\n			$conn->resource = $base;\n			//$conn->name = 'URL Provided :'.$user.'@'.$host.'/'.$base;\n			$conn->name = $conn->getDsn('PEAR');\n\n			$conn->save();\n\n			echo '<h1>Result of discovery</h1>';\n			echo '<pre>', var_dump($app['de_discmgr']->discover($conn)), '</pre>';\n		}\n	});\n\n	// Discover already saved connection\n	$app->get('/discover/{cid:[0-9]+}', function($cid) use ($app) {\n\n		$conn = \\AMPortal\\DataEngine\\Models\\Connection::findFirst($cid);\n\n		echo '<h1>Result of discovery</h1>';\n		echo '<pre>', var_dump($app['de_discmgr']->discover($conn)), '</pre>';\n\n	});\n\n	// \n	$app->get('/wizzard', function() {\n\n	});\n\n	$app->get('/wizzard/binding/', function() {\n\n\n	});\n\n\n	// Translation test\n	$app->get('/translate/{cnSrc:[0-9]+}/{cnDst:[0-9]+}/{clSrc:[0-9]+}/{clDst:[0-9]+}', function($cnSrc, $cnDst, $clSrc, $clDst) use ($app, $di) {\n\n		$connSrc = AMPortal\\DataEngine\\Models\\Connection::findFirst($cnSrc);\n		$connDst = AMPortal\\DataEngine\\Models\\Connection::findFirst($cnDst);\n\n		$collSrc = AMPortal\\DataEngine\\Models\\Collection::findFirst($clSrc);\n		$collDst = AMPortal\\DataEngine\\Models\\Collection::findFirst($clDst);\n\n//		echo \"<pre>\", var_dump($collSrc), \"</pre>\";\n\n		// Translate from source\n		echo \"<h1>Translation</h1>\";\n		$app['de_trstmgr']->translate($connSrc, $connDst, $collSrc, $collDst);\n\n/*\n		// Get the generated profiles from the profiler\n		$profiles = $di->get('dbProfiler')->getProfiles();\n\n		foreach ($profiles as $profile) {\n			echo \"SQL Statement: \", $profile->getSQLStatement(), \"\\n\";\n			echo \"Start Time: \", $profile->getInitialTime(), \"\\n\";\n			echo \"Final Time: \", $profile->getFinalTime(), \"\\n\";\n			echo \"Total Elapsed Time: \", $profile->getTotalElapsedSeconds(), \"\\n\";\n		}\n*/\n\n	});\n	\n\n	$app->notFound(function () use ($app) {\n		$app->response->setStatusCode(404, \"Not Found\")->sendHeaders();\n		echo \"This is crazy, but this page was not found!<br />\";\n		echo \"<h2>Request</h2>\";\n		echo '$_REQUEST : <pre>', print_r($_REQUEST, true), '</pre>';\n		echo '$_SERVER : <pre>', print_r($_SERVER, true), '</pre>';\n		echo '<h2>Application parameters</h2>';\n		echo '<pre>', print_r($app['router'], true), '</pre>';\n	});\n\n\n\n\n	echo '<!DOCTYPE html>\n<html>\n    <head>\n        <meta charset=\"utf-8\">\n        <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->\n        <title>Phalcon PHP Framework</title>\n        <link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\">\n    </head>\n    <body>\n        <div class=\"container\">';\n	$app->handle();\n	echo '</div>\n        <!-- jQuery (necessary for Bootstraps JavaScript plugins) -->\n        <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js\"></script>\n        <!-- Latest compiled and minified JavaScript -->\n        <script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js\"></script>\n    </body>\n</html>';\n\n\n// Commented out for Phalcon\\Debug purpose\n/*\n} catch (Phalcon\\Exception $e) {\n    echo \"!! Phalcon Exception: \",$e->getMessage(), ' (', $e->getFile(),':',$e->getLine(),')';\n    echo '<pre>', $e->getTraceAsString(), '</pre>';\n\n} catch (PDOException $e) {\n    echo \"!! PDO Exception: \", $e->getMessage();\n}\n*/",
+			"file": "public/test_dataengine.micro.php",
+			"file_size": 7990,
+			"file_write_time": 131158530381870619,
+			"settings":
+			{
+				"buffer_size": 7990,
 				"line_ending": "Unix"
 			}
 		},
@@ -113,7 +188,15 @@
 			"file": "apps/DataEngine/Services/DiscoveryManager.php",
 			"settings":
 			{
-				"buffer_size": 737,
+				"buffer_size": 735,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "apps/DataEngine/Services/InterfaceDiscover.php",
+			"settings":
+			{
+				"buffer_size": 258,
 				"line_ending": "Unix"
 			}
 		},
@@ -121,7 +204,15 @@
 			"file": "apps/DataEngine/Services/Translators/MySQL/Discovery.php",
 			"settings":
 			{
-				"buffer_size": 1710,
+				"buffer_size": 1708,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "apps/DataEngine/Services/Translators/MySQL/TraitAdapter.php",
+			"settings":
+			{
+				"buffer_size": 1069,
 				"line_ending": "Unix"
 			}
 		},
@@ -129,32 +220,50 @@
 			"file": "apps/DataEngine/Services/Translators/MySQL/Translation.php",
 			"settings":
 			{
-				"buffer_size": 545,
+				"buffer_size": 543,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "apps/DataEngine/Services/BaseManager.php",
+			"file": "apps/DataEngine/Views/Collection/discover.volt",
 			"settings":
 			{
-				"buffer_size": 681,
-				"line_ending": "Unix",
-				"name": "<?php"
+				"buffer_size": 1504,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "apps/DataEngine/Views/Collection/editor.volt",
+			"settings":
+			{
+				"buffer_size": 1042,
+				"line_ending": "Unix"
 			}
 		},
 		{
 			"file": "apps/Frontend/Library/Elements.php",
 			"settings":
 			{
-				"buffer_size": 2828,
+				"buffer_size": 2826,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "apps/DataEngine/Services/Translators/DiscoverySQL.php",
+			"file": "apps/Frontend/config/config.php",
 			"settings":
 			{
-				"buffer_size": 10553,
+				"buffer_size": 545,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "<?php\n\n/**\n *  This file is part of AMPortal, released under GNU/GPLv3\n *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.\n *  Copyright (C) 2016  Adrien Mahieux\n */\n\nnamespace AMPortal\\DataEngine\\Services\\Translators;\n\nuse AMPortal\\DataEngine\\Services\\BaseService;\nuse AMPortal\\DataEngine\\Services\\InterfaceDiscover;\nuse AMPortal\\DataEngine\\Models\\Connection;\nuse AMPortal\\DataEngine\\Models\\Placeholder;\nuse AMPortal\\DataEngine\\Models\\Field;\nuse AMPortal\\DataEngine\\Models\\Link;\n\nuse Phalcon\\Db\\Adapter\\Pdo as PdoAdapter;\nuse Phalcon\\Db\\Column;\nuse Phalcon\\Validation\\Validator;\nuse Phalcon\\Validation\\Validator\\StringLength as ValidatorStringLength;\nuse Phalcon\\Validation\\Validator\\Between as ValidatorBetween;\n\nabstract class DiscoverySQL extends BaseService implements InterfaceDiscover {\n\n\n	/**\n	 * @var PdoAdapter    $_connection Internal connection to the SQL database\n	 */\n	protected $_adapter;\n\n	protected $_placeholders = array();\n	protected $_fields = array();\n\n\n	/**\n	 * SQL-specific stubs\n	 */\n	abstract protected function _listDatabases(PdoAdapter $db);\n	abstract protected function _listTables(PdoAdapter $db, $dbname);\n	abstract protected function _listColumns(PdoAdapter $db, $dbname, $tablename);\n	abstract protected function _createAdapter(Connection $c);\n\n\n	protected function _getAdapter(Connection $c = null) {\n		if (!$this->_adapter) {\n			// Try to use current connection if not provided\n			if (!$c)\n				$c = $this->_connection;\n\n			$this->_adapter = $this->_createAdapter($c);\n		}\n\n		return $this->_adapter;\n	}\n\n\n	/**\n	 * @param  Connection $c \n	 * @return String     The UUID of the connection\n	 */\n	public function getConnectionUid(Connection $c) {\n		return $c->getUid();\n	}\n\n\n	public function testConnection(Connection $c) {\n		// TODO: Why ->connect() returns null ?\n		return $this->_getAdapter($c);\n	}\n\n\n	/**\n	 * \n	 */\n	public function discoverStructure(Connection $conn, $shallUpdate = false) {\n\n		$db = $this->_getAdapter($conn);\n		//$s_connUid = $this->getConnectionUid($conn);\n		$i_connId = $conn->getId();\n\n		$a_placeholders = array();\n		$a_bases = array();\n\n		if ($conn->resource) {\n			$a_bases[] = $conn->resource;\n		}\n		else {\n			$a_bases = $this->_listDatabases($db);\n		}\n\n		echo \"<h2>Discovering structure</h2>\";\n\n		// List databases\n		foreach ($a_bases as $s_base) {\n			echo \"<h3>$s_base</h3>\";\n\n			// List tables\n			foreach ($this->_listTables($db, $s_base) as $s_table) {\n\n				$s_phpath = $s_base.'.'.$s_table;\n				$s_phname = $s_base.' - '.$s_table;\n\n//				echo '<h2>', $s_phname, ' (', $s_phpath,')</h2>';\n\n				// Try to get an existing placeholder\n				$o_ph = Placeholder::findFirst(array(\n					\"path='$s_phpath'\",\n					\"order\"	=> \"id DESC\",\n				));\n\n				// No object was found, create a new one\n				if (!$o_ph) {\n					$o_ph = new Placeholder();\n\n					// Set base objects\n					$o_ph->path = $s_phpath;\n					$o_ph->name = $s_phname;\n					$o_ph->alias = '';\n					$o_ph->type = 'origin';\n					$o_ph->idConnection = $i_connId;\n\n				}\n\n				// Get the number of rows in the placeholder\n				/*\n				$o_countRes = $this->_getAdapter($conn)->query('SELECT COUNT(*) FROM '.$s_phpath);\n				$o_countRes->setFetchMode(\\Phalcon\\Db::FETCH_NUM);\n				$o_ph->rowsCount = $o_countRes->fetch()[0];\n				*/\n				\n				$o_ph->rowsCount = $this->_getAdapter($conn)->fetchColumn('SELECT COUNT(*) FROM '.$s_phpath);\n\n\n\n				// And save the new values\n				if (!$o_ph->save()) {\n					$msg = 'Error during save of Placeholder \"'. $s_phpath.'\"';\n					foreach ($o_ph->getMessages() as $message) {\n						$msg .= ' : '.$message;\n					}\n					throw new \\Exception($msg);\n				}\n\n\n\n				$i_idplaceholder = $o_ph->getId();\n				\n\n				// Get the indexes for this table and list them per-column\n				$a_indexes = array();\n				foreach ($this->_listIndexes($db, $s_base, $s_table) as $o_index) {\n\n					foreach ($o_index->getColumns() as $s_col) { \n						$a_indexes[$s_col] = $o_index;\n//						echo \"=== Index for $s_col : \", var_dump($o_index), \"==\";\n					}\n//					echo \"<pre>\", print_r($o_index, true), \"</pre>\";\n				}\n\n\n\n				// List fields\n				foreach ($this->_listColumns($db, $s_base, $s_table) as $o_column) { \n					\n//					echo '<pre>', var_dump($o_column), '</pre>';\n					$s_path = $o_column->getName();\n\n					// Find an exsiting record for this field\n					$o_fld = Field::findFirst(array(\n						'idPlaceholder=\"'.$i_idplaceholder.'\" \n							AND path=\"'.$s_path.'\"\n							AND source=\"original\" ',\n					));\n\n\n					// If the field was not found\n					if (!$o_fld) {\n\n						$o_fld = new Field();\n\n						// Set base attributes\n						$o_fld->setPlaceholder($o_ph);\n						$o_fld->path = $s_path;\n						$o_fld->name = $s_path;			// Default: same as path\n						$o_fld->format = 'string';		// Default: string\n						$o_fld->source = 'original';	// Default: golden source\n						$o_fld->attributes = '';		// Default: No attribute\n\n						// Add the index type if any\n						if (!empty($a_indexes[$o_fld->path])) {\n							$o_idx = $a_indexes[$o_fld->path];\n							$o_fld->attributes = $this->_getIndexType($o_idx);\n						}\n\n\n\n						$i_size = $o_column->getSize();\n						// Parse extended attributes\n						switch($o_column->getType()) {\n				\n							// Taken from Phalcon\\Db\\Column\n\n							// Numbers\n							case Column::TYPE_INTEGER:	// 0\n								//$o_fld->addValidation(new ValidatorBetween());\n								$o_fld->format = 'INT('.$i_size.')';\n								break;\n							case Column::TYPE_DECIMAL:	// 3\n								break;\n							case Column::TYPE_FLOAT:	// 7\n								break;\n							case Column::TYPE_BOOLEAN:	// 8\n								break;\n							case Column::TYPE_DOUBLE:	// 9\n								break;\n							case Column::TYPE_BIGINTEGER:	// 14\n								break;\n\n							// Date \n							case Column::TYPE_DATE:		// 1\n								$o_fld->type = 'date';\n								break;\n							case Column::TYPE_DATETIME:	// 4\n								$o_fld->type = 'datetime';\n								break;\n							case Column::TYPE_TIMESTAMP:	// 17\n								break;\n\n							// String\n							case Column::TYPE_TEXT:		// 6\n							case Column::TYPE_VARCHAR:	// 2\n							case Column::TYPE_CHAR:		// 5\n								//$o_fld->addValidation(new ValidatorStringLength(0, $i_size));\n								$o_fld->type = 'string';\n								break;\n\n							//  Binary fields\n							case Column::TYPE_TINYBLOB:	// 10\n								break;\n							case Column::TYPE_BLOB:		// 11\n								break;\n							case Column::TYPE_MEDIUMBLOB:	// 12\n								break;\n							case Column::TYPE_LONGBLOB:		// 13\n								break;\n\n							// JSON values\n							case Column::TYPE_JSON:		// 15\n								break;\n							case Column::TYPE_JSONB:	// 16\n								break;\n							\n							// Unhandled type, must update code\n							default:\n								break;\n						}\n\n\n\n\n\n						// Try to save it\n						if (!$o_fld->save()) {\n							$msg = 'Error during save of Field '.$o_column->getName().': ';\n							foreach ($o_fld->getMessages() as $message) {\n								$msg .= $message.\"\\n\";\n							}\n							throw new \\Exception($msg);\n						}\n\n					}\n\n					// Add parent link\n					$o_ph->addField($o_fld);\n\n				}\n\n				// Every stuff here should be unique\n				$this->_placeholders[$s_phpath] = $o_ph;\n\n			}\n\n\n\n			// List views\n			foreach ($this->_listViews($db, $s_base) as $s_view) {\n				echo \"<h1>View : \",$s_view,\"</h1>\";\n			}\n\n\n\n		}\n\n\n		// Return the placeholders\n		return array(\n			'placeholders'	=> array_keys($this->_placeholders),\n			'fields'		=> array_keys($this->_fields),\n		);\n	}\n\n\n	/**\n	 * \n	 *\n	 */\n	function discoverRelations(Connection $conn) {\n\n		$db = $this->_getAdapter($conn);\n		//$s_connUid = $this->getConnectionUid($conn);\n		$i_connId = $conn->id;\n\n		$a_placeholders = array();\n		$a_bases = array();\n\n		if ($conn->resource) {\n			$a_bases[] = $conn->resource;\n		}\n		else {\n			$a_bases = $this->_listDatabases($db);\n		}\n\n		echo \"<h2>Discovering relations</h2>\";\n\n		// List databases\n		foreach ($a_bases as $s_base) {\n			echo \"<h3>$s_base</h3>\";\n\n\n			// Get the foreign keys\n			foreach ($this->_placeholders as $s_phpath=>$o_ph) {\n				list($s_baseName, $s_tableName) = explode('.', $s_phpath);\n\n				// Skip records for other databases in current connection\n				if ($s_baseName != $s_base)\n					continue;\n\n				echo \"=== References for $s_phpath ===<br />\";\n\n				\n				// Create a link object from these references\n				foreach ($this->_listReferences($db, $s_base, $s_tableName) as $o_ref) {\n\n					// Reference names\n					$s_refSchema = $o_ref->getReferencedSchema();\n					$s_refTable  = $o_ref->getReferencedTable();\n					$s_locSchema = $s_base;\n					$s_locTable  = $s_tableName;\n\n					$a_refFields = $o_ref->getReferencedColumns();\n					$a_locFields = $o_ref->getColumns();\n\n					if (count($a_refFields) > 6)\n						throw new \\Exception('Unable to manage reference \"'.$o_ref->getName().'\" with '.count($a_refFields).' (6 max)');\n\n\n					for ($i=0; $i<count($a_refFields); $i++) {\n						$a_fields = array($a_locFields[$i]	=> $a_refFields[$i]);\n					}\n\n					// Placeholder objects\n					$o_refPlaceholder = $this->_placeholders[$s_refSchema.\".\".$s_refTable];\n					$o_locPlaceholder = $this->_placeholders[$s_phpath];\n\n					if (!$o_refPlaceholder)\n						throw new \\Exception(\"Unable to get referenced placeholder object\");\n					if (!$o_locPlaceholder)\n						throw new \\Exception(\"Unable to get local placeholder object\");\n\n//echo print_r(array_keys($this->_placeholders));\n//echo var_dump($o_refPlaceholder);\n\n\n					// Build the clause to find an existing link\n					$s_searchClause = \n						'idPlaceholderSrc = \"'.$o_locPlaceholder->getId().'\" AND \n						 idPlaceholderDst = \"'.$o_refPlaceholder->getId().'\" ';\n\n					$i = 0;\n					foreach ($a_fields as $s_loc=>$s_ref) {\n						$o_locField = $o_locPlaceholder->getField($s_loc);\n						$o_refField = $o_refPlaceholder->getField($s_ref);\n						\n						$s_searchClause .= ' AND \n							idFieldSrc'.$i.' = \"'.$o_locField->getId().'\" AND\n							idFieldDst'.$i.' = \"'.$o_refField->getId().'\"';\n						$i++;\n					}\n\n					// Search an existing link\n					$o_lnk = Link::findFirst(array(\n						$s_searchClause,\n					));\n\n					// If nothing found, create one\n					if (!$o_lnk) {\n						$o_lnk = new Link();\n						$o_lnk->name = $o_ref->getName();\n						$o_lnk->idPlaceholderSrc = $o_locPlaceholder->getId();\n						$o_lnk->idPlaceholderDst = $o_refPlaceholder->getId();\n\n						$i = 0;\n						foreach ($a_fields as $s_loc=>$s_ref) {\n							$o_locField = $o_locPlaceholder->getField($s_loc);\n							$o_refField = $o_refPlaceholder->getField($s_ref);\n\n							$o_lnk->{'idFieldSrc'.$i} = $o_locField->getId();\n							$o_lnk->{'idFieldDst'.$i} = $o_refField->getId();\n							$i++;\n						}\n\n						// Try to save it\n						if (!$o_lnk->save()) {\n							$msg = 'Error during save of Link '.$o_lnk->name.': ';\n							foreach ($o_lnk->getMessages() as $message) {\n								$msg .= $message.\"\\n\";\n							}\n							throw new \\Exception($msg);\n						}\n\n					}\n				}\n\n			}\n		}\n	}\n\n\n\n\n}",
+			"file": "apps/DataEngine/Services/Translators/DiscoverySQL.php",
+			"file_size": 10730,
+			"file_write_time": 131158549023888205,
+			"settings":
+			{
+				"buffer_size": 10730,
 				"line_ending": "Unix"
 			}
 		},
@@ -162,7 +271,7 @@
 			"file": "apps/DataEngine/Services/Translators/TranslationSQL.php",
 			"settings":
 			{
-				"buffer_size": 9871,
+				"buffer_size": 10048,
 				"line_ending": "Unix"
 			}
 		},
@@ -170,7 +279,7 @@
 			"file": "apps/DataEngine/Services/InterfaceTranslator.php",
 			"settings":
 			{
-				"buffer_size": 225,
+				"buffer_size": 402,
 				"line_ending": "Unix"
 			}
 		},
@@ -178,7 +287,7 @@
 			"file": "apps/DataEngine/Models/BaseModel.php",
 			"settings":
 			{
-				"buffer_size": 351,
+				"buffer_size": 528,
 				"line_ending": "Unix",
 				"name": "<?php"
 			}
@@ -187,48 +296,24 @@
 			"file": "apps/DataEngine/Services/BaseService.php",
 			"settings":
 			{
-				"buffer_size": 319,
+				"buffer_size": 496,
 				"line_ending": "Unix",
 				"name": "<?php"
 			}
 		},
 		{
-			"file": "apps/DataEngine/Models/Connection.php",
+			"file": "apps/Frontend/Views/index.volt",
 			"settings":
 			{
-				"buffer_size": 1523,
+				"buffer_size": 1632,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "public/index.php",
+			"file": "apps/DataEngine/Views/Collection/index.volt",
 			"settings":
 			{
-				"buffer_size": 1035,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "config/services.php",
-			"settings":
-			{
-				"buffer_size": 3654,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "apps/DataEngine/Module.php",
-			"settings":
-			{
-				"buffer_size": 1027,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "apps/DataEngine/config/config.php",
-			"settings":
-			{
-				"buffer_size": 382,
+				"buffer_size": 258,
 				"line_ending": "Unix"
 			}
 		},
@@ -236,7 +321,23 @@
 			"file": "apps/DataEngine/Models/Collection.php",
 			"settings":
 			{
-				"buffer_size": 2206,
+				"buffer_size": 2255,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "public/js/DataEngine-Collection-discover.js",
+			"settings":
+			{
+				"buffer_size": 817,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "public/js/DataEngine-Collection-editor.js",
+			"settings":
+			{
+				"buffer_size": 1508,
 				"line_ending": "Unix"
 			}
 		},
@@ -244,7 +345,7 @@
 			"file": "apps/DataEngine/Models/CollectionFields.php",
 			"settings":
 			{
-				"buffer_size": 418,
+				"buffer_size": 595,
 				"line_ending": "Unix",
 				"name": "<?php"
 			}
@@ -253,7 +354,7 @@
 			"file": "apps/DataEngine/Models/Placeholder.php",
 			"settings":
 			{
-				"buffer_size": 955,
+				"buffer_size": 1270,
 				"line_ending": "Unix"
 			}
 		},
@@ -261,7 +362,7 @@
 			"file": "apps/DataEngine/Models/Field.php",
 			"settings":
 			{
-				"buffer_size": 1685,
+				"buffer_size": 1683,
 				"line_ending": "Unix"
 			}
 		},
@@ -269,16 +370,24 @@
 			"file": "apps/DataEngine/Models/Filter.php",
 			"settings":
 			{
-				"buffer_size": 85,
+				"buffer_size": 262,
 				"line_ending": "Unix",
 				"name": "<?php"
+			}
+		},
+		{
+			"file": "apps/DataEngine/Models/Job.php",
+			"settings":
+			{
+				"buffer_size": 182,
+				"line_ending": "Unix"
 			}
 		},
 		{
 			"file": "apps/DataEngine/Models/Workflow.php",
 			"settings":
 			{
-				"buffer_size": 286,
+				"buffer_size": 463,
 				"line_ending": "Unix"
 			}
 		},
@@ -286,38 +395,70 @@
 			"file": "apps/DataEngine/Models/Link.php",
 			"settings":
 			{
-				"buffer_size": 879,
+				"buffer_size": 1056,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"contents": "<?php\n\nnamespace AMPortal\\DataEngine\\Controllers;\n\nclass SyncController extends ControllerBase {\n\n	public function indexAction() {\n	\n\n\n	}\n\n\n	public function syncAction($cnSrc, $cnDst, $clSrc, $clDst) {\n\n		$connSrc = AMPortal\\DataEngine\\Models\\Connection::findFirst($cnSrc);\n		$connDst = AMPortal\\DataEngine\\Models\\Connection::findFirst($cnDst);\n\n		$collSrc = AMPortal\\DataEngine\\Models\\Collection::findFirst($clSrc);\n		$collDst = AMPortal\\DataEngine\\Models\\Collection::findFirst($clDst);\n\n		// Translate from source\n		echo \"<h1>Translation</h1>\";\n		$app['de_trstmgr']->translate($connSrc, $connDst, $collSrc, $collDst);\n\n/*\n		// Get the generated profiles from the profiler\n		$profiles = $di->get('dbProfiler')->getProfiles();\n\n		foreach ($profiles as $profile) {\n			echo \"SQL Statement: \", $profile->getSQLStatement(), \"\\n\";\n			echo \"Start Time: \", $profile->getInitialTime(), \"\\n\";\n			echo \"Final Time: \", $profile->getFinalTime(), \"\\n\";\n			echo \"Total Elapsed Time: \", $profile->getTotalElapsedSeconds(), \"\\n\";\n		}\n*/\n\n	\n	}\n\n}",
 			"file": "apps/DataEngine/Controllers/SyncController.php",
-			"file_size": 139,
-			"file_write_time": 131148214061822518,
 			"settings":
 			{
-				"buffer_size": 1029,
+				"buffer_size": 1250,
 				"line_ending": "Unix",
 				"name": "<?php"
 			}
 		},
 		{
-			"file": "apps/DataEngine/Controllers/WizzardController.php",
+			"file": "apps/DataEngine/Controllers/CollectionController.php",
 			"settings":
 			{
-				"buffer_size": 408,
+				"buffer_size": 6682,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"contents": "<h3>DataEngine index page. Test links :</h3>\n\n<ul>\n	<li><a href=\"{{ url('discover/list') }}\">List connections already used for discovery</a></li>\n	<li><a href=\"{{ url('translate/1') }}\">Translate Collections</a></li>\n</ul>\n",
-			"file": "apps/DataEngine/Views/Index/index.volt",
-			"file_size": 232,
-			"file_write_time": 131157833963559398,
+			"contents": "<?php\n\n/**\n *  This file is part of AMPortal, released under GNU/GPLv3\n *  See LICENSE or go to <http://www.gnu.org/licenses/> for details.\n *  Copyright (C) 2016  Adrien Mahieux\n */\n\nnamespace AMPortal\\DataEngine\\Models;\n\n/*\n  A mapping is a link or transformation of 2 collections' fields. Ex:\n  - C1.F1 => C2.F4\n  - C1.PlainText == sha512() ==> C2.HashedPass\n\n*/\n\n\nclass CollectionMapping extends BaseModel {\n\n	private $id;\n	public $idCollectionSrc;\n	public $idCOllectionDst;\n\n\n	public function initialize() {\n		$this->belongsTo('idCollectionSrc', 'AMPortal\\DataEngine\\Models\\Collection', 'id', \n			array(\n				'alias'	=> 'CollectionSrc',\n			)\n		);\n		$this->belongsTo('idCollectionDst', 'AMPortal\\DataEngine\\Models\\Collection', 'id',\n			array(\n				'alias'	=> 'CollectionDst',\n			)\n		);\n\n		\n	}\n\n}",
+			"file": "apps/DataEngine/Models/CollectionMapping.php",
+			"file_size": 794,
+			"file_write_time": 131159985680007667,
 			"settings":
 			{
-				"buffer_size": 223,
+				"buffer_size": 797,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "apps/DataEngine/Controllers/ControllerBase.php",
+			"settings":
+			{
+				"buffer_size": 302,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "apps/DataEngine/Controllers/IndexController.php",
+			"settings":
+			{
+				"buffer_size": 332,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "<h3>DataEngine index page. Test links :</h3>\n\n<ul>\n	<li><a href=\"{{ url('DataEngine/Sync/list') }}\">List connections already used for discovery</a></li>\n	<li><a href=\"{{ url('DataEngine/Collection/translate/1') }}\">Translate Collections</a></li>\n</ul>\n",
+			"file": "apps/DataEngine/Views/Index/index.volt",
+			"file_size": 252,
+			"file_write_time": 131158292555104767,
+			"settings":
+			{
+				"buffer_size": 252,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "apps/DataEngine/Controllers/WorkflowController.php",
+			"settings":
+			{
+				"buffer_size": 281,
 				"line_ending": "Unix"
 			}
 		}
@@ -388,23 +529,39 @@
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Library",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Models",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators/CSV",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators/JSON",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators/LDAP",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators/MySQL",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators/Oracle",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators/PostgreSQL",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators/SQLServer",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/Index",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/Wizzard",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/Collection",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/layouts",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/config",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/Controllers",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/Library",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/Views",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/Views/Index",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/Views/layouts",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/config",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/config",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/public"
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/public",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/public/js"
 	],
 	"file_history":
 	[
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Models/Connection.php",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/BaseManager.php",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/public/test_dataengine.php",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/Collection/editor.volt",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/index.volt",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/public/index.php",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/config/services.php",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Module.php",
+		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/config/config.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/Controllers/IndexController.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/View/layouts/Index.volt",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/Wizzard/index.volt",
@@ -413,7 +570,6 @@
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Controllers/ControllerBase.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Services/Translators/MySQL/TraitAdapter.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/config/config.php",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/config/config.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/config/modules.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/Module.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/layouts/Wizzard.volt",
@@ -422,12 +578,7 @@
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/Index/index.volt",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/View/layouts/index.volt",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/Frontend/Controller/indexController.php",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/config/services.php",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/index.volt",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/index.volt.php",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/public/test_dataengine.php",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/public/index.php",
-		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Module.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/config/config.dataengine.php",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Views/Wizzard/discover.volt",
 		"/home/virt/pool-lxc/webdev/rootfs/home/www/webdev-phalcon/html/apps/DataEngine/Controllers/BaseController.php",
@@ -500,7 +651,7 @@
 	"groups":
 	[
 		{
-			"selected": 7,
+			"selected": 1,
 			"sheets":
 			[
 				{
@@ -509,15 +660,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 227,
+						"buffer_size": 225,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								184,
-								184
+								182,
+								182
 							]
 						],
 						"settings":
@@ -530,165 +681,16 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 11,
+					"stack_index": 30,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "apps/DataEngine/Services/TranslatorManager.php",
+					"file": "apps/DataEngine/config/config.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1861,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								184,
-								184
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"auto_name": "<?php",
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 12,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "apps/Frontend/Module.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 920,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								666,
-								666
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 294.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 9,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "apps/DataEngine/Services/DiscoveryManager.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 737,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								184,
-								184
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 13,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "apps/DataEngine/Services/Translators/MySQL/Discovery.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1710,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								184,
-								184
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 14,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "apps/DataEngine/Services/Translators/MySQL/Translation.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 545,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								184,
-								184
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 15,
-					"type": "text"
-				},
-				{
-					"buffer": 6,
-					"file": "apps/DataEngine/Services/BaseManager.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 681,
+						"buffer_size": 559,
 						"regions":
 						{
 						},
@@ -697,36 +699,6 @@
 							[
 								7,
 								7
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"auto_name": "<?php",
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 10,
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"file": "apps/Frontend/Library/Elements.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2828,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								184,
-								184
 							]
 						],
 						"settings":
@@ -742,123 +714,211 @@
 					},
 					"stack_index": 0,
 					"type": "text"
-				}
-			]
-		},
-		{
-			"selected": 4,
-			"sheets":
-			[
+				},
 				{
-					"buffer": 8,
-					"file": "apps/DataEngine/Services/Translators/DiscoverySQL.php",
+					"buffer": 2,
+					"file": "apps/DataEngine/Module.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 10553,
+						"buffer_size": 1204,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								6843,
-								6843
+								182,
+								182
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
 							"syntax": "Packages/PHP/PHP.sublime-syntax",
-							"translate_tabs_to_spaces": false
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1643.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 20,
+					"stack_index": 29,
 					"type": "text"
 				},
 				{
-					"buffer": 9,
-					"file": "apps/DataEngine/Services/Translators/TranslationSQL.php",
+					"buffer": 3,
+					"file": "apps/Frontend/Controllers/IndexController.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 9871,
+						"buffer_size": 343,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								9869,
-								9869
+								182,
+								182
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 6020.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 21,
-					"type": "text"
-				},
-				{
-					"buffer": 10,
-					"file": "apps/DataEngine/Services/InterfaceTranslator.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 225,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								223,
-								223
-							]
-						],
-						"settings":
-						{
 							"syntax": "Packages/PHP/PHP.sublime-syntax"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 26,
+					"stack_index": 28,
 					"type": "text"
 				},
 				{
-					"buffer": 11,
-					"file": "apps/DataEngine/Models/BaseModel.php",
+					"buffer": 4,
+					"file": "apps/DataEngine/Services/TranslatorManager.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 351,
+						"buffer_size": 1859,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								351,
-								351
+								182,
+								182
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
 							"auto_name": "<?php",
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 210.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "apps/Frontend/Module.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 918,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 14.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 25,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "config/modules.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 539,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
 							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 24,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "config/routes.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 989,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 23,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "config/services.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3765,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -868,56 +928,20 @@
 					"type": "text"
 				},
 				{
-					"buffer": 12,
-					"file": "apps/DataEngine/Services/BaseService.php",
+					"buffer": 9,
+					"file": "public/index.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 319,
+						"buffer_size": 1212,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								319,
-								319
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"auto_name": "<?php",
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 42.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				}
-			]
-		},
-		{
-			"selected": 3,
-			"sheets":
-			[
-				{
-					"buffer": 13,
-					"file": "apps/DataEngine/Models/Connection.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1523,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								475,
-								475
+								182,
+								182
 							]
 						],
 						"settings":
@@ -927,239 +951,91 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 490.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 19,
+					"stack_index": 21,
 					"type": "text"
 				},
 				{
-					"buffer": 14,
-					"file": "public/index.php",
+					"buffer": 10,
+					"file": "public/test_dataengine.micro.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1035,
+						"buffer_size": 7990,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								371,
-								371
+								7,
+								7
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
 							"syntax": "Packages/PHP/PHP.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 196.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 15,
-					"file": "config/services.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3654,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1710,
-								1710
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 490.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 16,
-					"file": "apps/DataEngine/Module.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1027,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1015,
-								1015
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 224.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 17,
-					"file": "apps/DataEngine/config/config.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 382,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								343,
-								343
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 8,
+					"stack_index": 20,
 					"type": "text"
 				},
 				{
-					"buffer": 18,
-					"file": "apps/DataEngine/Models/Collection.php",
+					"buffer": 11,
+					"file": "apps/DataEngine/Services/DiscoveryManager.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2206,
+						"buffer_size": 735,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								184,
-								184
+								182,
+								182
+							],
+							[
+								308,
+								308
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 84.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 17,
+					"stack_index": 7,
 					"type": "text"
 				},
 				{
-					"buffer": 19,
-					"file": "apps/DataEngine/Models/CollectionFields.php",
+					"buffer": 12,
+					"file": "apps/DataEngine/Services/InterfaceDiscover.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 418,
+						"buffer_size": 258,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								402,
-								402
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"auto_name": "<?php",
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 18,
-					"type": "text"
-				},
-				{
-					"buffer": 20,
-					"file": "apps/DataEngine/Models/Placeholder.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 955,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								424,
-								424
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 336.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 23,
-					"type": "text"
-				},
-				{
-					"buffer": 21,
-					"file": "apps/DataEngine/Models/Field.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1685,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								184,
-								184
+								182,
+								182
 							]
 						],
 						"settings":
@@ -1175,150 +1051,144 @@
 					"type": "text"
 				},
 				{
-					"buffer": 22,
-					"file": "apps/DataEngine/Models/Filter.php",
+					"buffer": 13,
+					"file": "apps/DataEngine/Services/Translators/MySQL/Discovery.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 85,
+						"buffer_size": 1708,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								81,
-								81
+								182,
+								182
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
-							"auto_name": "<?php",
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 18,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "apps/DataEngine/Services/Translators/MySQL/TraitAdapter.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1069,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 17,
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "apps/DataEngine/Services/Translators/MySQL/Translation.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 543,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								385,
+								385
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
 							"syntax": "Packages/PHP/PHP.sublime-syntax"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 24,
+					"stack_index": 13,
 					"type": "text"
 				},
 				{
-					"buffer": 23,
-					"file": "apps/DataEngine/Models/Workflow.php",
+					"buffer": 16,
+					"file": "apps/DataEngine/Views/Collection/discover.volt",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 286,
+						"buffer_size": 1504,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								276,
-								276
+								1479,
+								1479
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
+							"syntax": "Packages/Volt/Volt/HTML (Volt).tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 140.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 27,
+					"stack_index": 8,
 					"type": "text"
 				},
 				{
-					"buffer": 24,
-					"file": "apps/DataEngine/Models/Link.php",
-					"semi_transient": false,
+					"buffer": 17,
+					"file": "apps/DataEngine/Views/Collection/editor.volt",
+					"semi_transient": true,
 					"settings":
 					{
-						"buffer_size": 879,
+						"buffer_size": 1042,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								751,
-								751
+								0,
+								0
 							]
 						],
 						"settings":
 						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 378.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 25,
-					"type": "text"
-				}
-			]
-		},
-		{
-			"selected": 2,
-			"sheets":
-			[
-				{
-					"buffer": 25,
-					"file": "apps/DataEngine/Controllers/SyncController.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1029,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								133,
-								133
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"auto_name": "<?php",
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 7,
-					"type": "text"
-				},
-				{
-					"buffer": 26,
-					"file": "apps/DataEngine/Controllers/WizzardController.php",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 408,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								356,
-								356
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/PHP/PHP.sublime-syntax"
+							"syntax": "Packages/Volt/Volt/HTML (Volt).tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -1328,20 +1198,274 @@
 					"type": "text"
 				},
 				{
-					"buffer": 27,
-					"file": "apps/DataEngine/Views/Index/index.volt",
+					"buffer": 18,
+					"file": "apps/Frontend/Library/Elements.php",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 223,
+						"buffer_size": 2826,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								223,
-								223
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 27,
+					"type": "text"
+				},
+				{
+					"buffer": 19,
+					"file": "apps/Frontend/config/config.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 545,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 26,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 20,
+					"file": "apps/DataEngine/Services/Translators/DiscoverySQL.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10730,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1764.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 21,
+					"file": "apps/DataEngine/Services/Translators/TranslationSQL.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10048,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 19,
+					"type": "text"
+				},
+				{
+					"buffer": 22,
+					"file": "apps/DataEngine/Services/InterfaceTranslator.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 402,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								183,
+								183
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 31,
+					"type": "text"
+				},
+				{
+					"buffer": 23,
+					"file": "apps/DataEngine/Models/BaseModel.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 528,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								528,
+								528
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "<?php",
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 38,
+					"type": "text"
+				},
+				{
+					"buffer": 24,
+					"file": "apps/DataEngine/Services/BaseService.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 496,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "<?php",
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 32,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 3,
+			"sheets":
+			[
+				{
+					"buffer": 25,
+					"file": "apps/Frontend/Views/index.volt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1632,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1391,
+								1391
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/Volt/Volt/HTML (Volt).tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 210.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 26,
+					"file": "apps/DataEngine/Views/Collection/index.volt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 258,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								73,
+								73
 							]
 						],
 						"settings":
@@ -1353,7 +1477,519 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 27,
+					"file": "apps/DataEngine/Models/Collection.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2255,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 210.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 28,
+					"file": "public/js/DataEngine-Collection-discover.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 817,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								811,
+								811
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 238.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 29,
+					"file": "public/js/DataEngine-Collection-editor.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1508,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								119,
+								119
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 30,
+					"file": "apps/DataEngine/Models/CollectionFields.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 595,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "<?php",
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 15,
+					"type": "text"
+				},
+				{
+					"buffer": 31,
+					"file": "apps/DataEngine/Models/Placeholder.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1270,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 33,
+					"type": "text"
+				},
+				{
+					"buffer": 32,
+					"file": "apps/DataEngine/Models/Field.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1683,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 37,
+					"type": "text"
+				},
+				{
+					"buffer": 33,
+					"file": "apps/DataEngine/Models/Filter.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 262,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "<?php",
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 36,
+					"type": "text"
+				},
+				{
+					"buffer": 34,
+					"file": "apps/DataEngine/Models/Job.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 182,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5,
+								5
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 35,
+					"type": "text"
+				},
+				{
+					"buffer": 35,
+					"file": "apps/DataEngine/Models/Workflow.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 463,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								7,
+								7
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 36,
+					"file": "apps/DataEngine/Models/Link.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1056,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 34,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 37,
+					"file": "apps/DataEngine/Controllers/SyncController.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1250,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								7,
+								7
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "<?php",
+							"syntax": "Packages/PHP/PHP.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 40,
+					"type": "text"
+				},
+				{
+					"buffer": 38,
+					"file": "apps/DataEngine/Controllers/CollectionController.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6682,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3582,
+								3582
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 2128.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 39,
+					"file": "apps/DataEngine/Models/CollectionMapping.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 797,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6,
+								6
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "",
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 14.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 40,
+					"file": "apps/DataEngine/Controllers/ControllerBase.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 302,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 42,
+					"type": "text"
+				},
+				{
+					"buffer": 41,
+					"file": "apps/DataEngine/Controllers/IndexController.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 332,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 41,
+					"type": "text"
+				},
+				{
+					"buffer": 42,
+					"file": "apps/DataEngine/Views/Index/index.volt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 252,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								252,
+								252
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/Volt/Volt/HTML (Volt).tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 43,
+					"type": "text"
+				},
+				{
+					"buffer": 43,
+					"file": "apps/DataEngine/Controllers/WorkflowController.php",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 281,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								182,
+								182
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/PHP/PHP.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 39,
 					"type": "text"
 				}
 			]

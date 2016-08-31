@@ -18,4 +18,11 @@
 			<select id="fields_to" class="form-control"  multiple="multiple" size="40" name="fields[]"></select>
 		</div>
 	</div>
+	<div class="row">
+		<div class="col-sm-5"></div>
+		<div class="col-sm-2">
+			<input type="submit" name="Save" value="Save" class="btn btn-block" />
+		</div>
+		<div class="col-sm-5"></div>
+	</div>
 </form>

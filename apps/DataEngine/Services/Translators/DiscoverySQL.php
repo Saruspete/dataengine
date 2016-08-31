@@ -42,7 +42,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 	abstract protected function _createAdapter(Connection $c);
 
 
-	protected function _getAdapter(Connection $c = null) {
+	protected function _getAdapter(Connection $c = NULL) {
 		if (!$this->_adapter) {
 			// Try to use current connection if not provided
 			if (!$c)
@@ -305,7 +305,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 	 * 
 	 *
 	 */
-	function discoverRelations(Connection $conn) {
+	public function discoverRelations(Connection $conn) {
 
 		$db = $this->_getAdapter($conn);
 		//$s_connUid = $this->getConnectionUid($conn);
