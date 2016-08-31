@@ -13,6 +13,7 @@ use AMPortal\DataEngine\Models\Collection;
 use AMPortal\DataEngine\Models\Connection;
 use AMPortal\DataEngine\Models\Placeholder;
 use AMPortal\DataEngine\Models\Field;
+use AMPortal\DataEngine\Services\DiscoveryManager;
 
 class CollectionController extends ControllerBase {
 
@@ -185,7 +186,7 @@ class CollectionController extends ControllerBase {
 				
 				$o_mgr = new DiscoveryManager($this->di);
 
-				$o_mgr->discover($c);
+				$o_mgr->discover($o_cn);
 	
 			}
 

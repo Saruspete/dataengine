@@ -475,15 +475,12 @@ class MSSQL extends Dialect
 	 */
 	public function dropTable($tableName, $schemaName = null, $ifExists = true) {
 
-		$table = $this->prepareTable($tableName, $schemaName);
+		$table = "N'".$this->prepareTable($tableName, $schemaName)."'";
 
-		if ($ifExists) {
-			$sql = "DROP TABLE IF EXISTS " . $table;
-		} else {
-			$sql = "DROP TABLE " . $table;
-		}
-
-		return $sql;
+		if ($ifExists)
+			return $this->_getIfObjectExists($tableName).' DROP TABLE '.$table;
+		else 
+			return "DROP TABLE ".$table;
 	}
 
 	/**
@@ -503,15 +500,12 @@ class MSSQL extends Dialect
 	 */
 	public function dropView($viewName, $schemaName = null, $ifExists = true) {
 
-		$view = $this->prepareTable($viewName, $schemaName);
+		$view = "N'".$this->prepareTable($viewName, $schemaName)."'";
 
-		if ($ifExists) {
-			$sql = "DROP VIEW IF EXISTS " . $view;
-		} else {
-			$sql = "DROP VIEW " . $view;
-		}
-
-		return $sql;
+		if ($ifExists)
+			return $this->_getIfObjectExists($view, 'V').' DROP VIEW '.$view;
+		else
+			return 'DROP VIEW '.$view;
 	}
 
 	/**
@@ -523,20 +517,29 @@ class MSSQL extends Dialect
 	 * </code>
 	 */
 	public function tableExists($tableName, $schemaName = null) {
-		if ($schemaName) {
-			return "SELECT IF(COUNT(*) > 0, 1, 0) FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME`= '" . $tableName . "' AND `TABLE_SCHEMA` = '" . $schemaName . "'";
-		}
-		return "SELECT IF(COUNT(*) > 0, 1, 0) FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_NAME` = '" . $tableName . "' AND `TABLE_SCHEMA` = DATABASE()";
+		$sql = 'SELECT IF(COUNT(*) > 0, 1, 0) FROM [INFORMATION_SCHEMA].[TABLES] WHERE  [TABLE_TYPE] = "USER TABLE" AND [TABLE_NAME] = "'.$tableName.'" AND [TABLE_SCHEMA] = ';
+
+		if ($schemaName)
+			$sql .= '"'.$schemaName.'"';
+		else 
+			$sql .= 'DATABASE()';
+
+		return $sql;
 	}
 
 	/**
 	 * Generates SQL checking for the existence of a schema.view
 	 */
 	public function viewExists($viewName, $schemaName = null) {
-		if ($schemaName) {
-			return "SELECT IF(COUNT(*) > 0, 1, 0) FROM `INFORMATION_SCHEMA`.`VIEWS` WHERE `TABLE_NAME`= '" . $viewName . "' AND `TABLE_SCHEMA`='" . $schemaName . "'";
-		}
-		return "SELECT IF(COUNT(*) > 0, 1, 0) FROM `INFORMATION_SCHEMA`.`VIEWS` WHERE `TABLE_NAME`='" . $viewName . "'";
+
+		$sql = 'SELECT IF(COUNT(*) > 0, 1, 0) FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_TYPE] = "VIEW" AND [TABLE_NAME] = "'.$viewName.'"  AND [TABLE_SCHEMA] = ';
+		
+		if ($schemaName)
+			$sql .= '"'.$schemaName.'"';
+		else
+			$sql .= 'DATABASE()';
+
+		return $sql;
 	}
 
 	/**
@@ -547,7 +550,8 @@ class MSSQL extends Dialect
 	 * </code>
 	 */
 	public function describeColumns($table, $schema = null) {
-		return "DESCRIBE " . $this->prepareTable($table, $schema);
+		//return "DESCRIBE " . $this->prepareTable($table, $schema);
+		return 'EXEC sp_columns '.$this->prepareTable($table, $schema);
 	}
 
 	/**
@@ -558,27 +562,26 @@ class MSSQL extends Dialect
 	 * </code>
 	 */
 	public function listTables($schemaName = null) {
+		$sql = 'SELECT [TABLE_NAME] FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_TYPE] = "BASE TABLE"';
 		if ($schemaName) {
-			return "SHOW TABLES FROM `" . $schemaName . "`";
+			$sql .= 'AND [TABLE_SCHEMA] = "' . $schemaName . '"';
 		}
-		return "SHOW TABLES";
-	}
-
-	/**
-	 * Generates the SQL to list all views of a schema or user
-	 */
-	public function listViews($schemaName = null) {
-		if ($schemaName) {
-			return "SELECT `TABLE_NAME` AS view_name FROM `INFORMATION_SCHEMA`.`VIEWS` WHERE `TABLE_SCHEMA` = '" . $schemaName . "' ORDER BY view_name";
-		}
-		return "SELECT `TABLE_NAME` AS view_name FROM `INFORMATION_SCHEMA`.`VIEWS` ORDER BY view_name";
+		return $sql . ' ORDER BY [TABLE_NAME]';
 	}
 
 	/**
 	 * Generates SQL to query indexes on a table
 	 */
 	public function describeIndexes($table, $schema = null) {
-		return "SHOW INDEXES FROM " . $this->prepareTable($table, $schema);
+
+		$sql = 'SELECT DB_NAME() AS Database_Name, sc.name AS Schema_Name, o.name AS Table_Name, i.name AS Index_Name, i.type_desc AS Index_Type';
+		$sql .= ' FROM '.$this->prepareTable('indexes', 'sys', 'i').' INNER JOIN '.$this->prepareTable('objects', 'sys', 'o').' ON i.object_id = o.object_id INNER JOIN '.$this->prepareTable('schemas', 'sys', 'sc').' ON o.schema_id = sc.schema_id ';
+		$sql .= ' WHERE i.name IS NOT NULL AND o.type = "U" AND Table_Name = "'.$table.'" ';
+		if ($schemas)
+			$sql .= ' AND Schema_Name = "'.$schema.'"';
+		$sql .= ' ORDER BY o.name, i.type';
+		
+		return $sql;
 	}
 
 	/**
@@ -603,6 +606,41 @@ class MSSQL extends Dialect
 			return $sql . "TABLES.TABLE_SCHEMA = '" . $schema . "' AND TABLES.TABLE_NAME = '" . $table . "'";
 		}
 		return $sql . "TABLES.TABLE_NAME = '" . $table . "'";
+	}
+
+
+	protected function _getIfObjectExists($name, $type = 'U') {
+		/*
+		From https://technet.microsoft.com/en-us/library/ms190324.aspx
+		AF = Aggregate function (CLR)
+		C = CHECK constraint
+		D = DEFAULT (constraint or stand-alone)
+		F = FOREIGN KEY constraint
+		FN = SQL scalar function
+		FS = Assembly (CLR) scalar-function
+		FT = Assembly (CLR) table-valued function
+		IF = SQL inline table-valued function
+		IT = Internal table
+		P = SQL Stored Procedure
+		PC = Assembly (CLR) stored-procedure
+		PG = Plan guide
+		PK = PRIMARY KEY constraint
+		R = Rule (old-style, stand-alone)
+		RF = Replication-filter-procedure
+		S = System base table
+		SN = Synonym
+		SO = Sequence object
+		SQ = Service queue
+		TA = Assembly (CLR) DML trigger
+		TF = SQL table-valued-function
+		TR = SQL DML trigger
+		TT = Table type
+		U = Table (user-defined)
+		UQ = UNIQUE constraint
+		V = View
+		X = Extended stored procedure
+		*/
+		return 'IF OBJECT_ID('.$name.', "'.$type.'") IS NOT NULL';
 	}
 
 	/**
