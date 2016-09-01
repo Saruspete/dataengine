@@ -298,7 +298,7 @@ class CollectionController extends ControllerBase {
 		$cn->name = $a_vars['Name'];
 		$cn->type = $a_vars['Type'];
 		$cn->hostname = $host;
-		$cn->hostport = $port || null;
+		$cn->hostport = $port;
 		$cn->username = $a_vars['User'];
 
 		$cn->password = ($a_vars['Pass'] == "(unchanged)") ? NULL : $a_vars['Pass'];

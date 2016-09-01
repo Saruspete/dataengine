@@ -339,16 +339,14 @@ class MSSQL extends Dialect
 	/**
 	 * Generates SQL to delete a foreign key from a table
 	 */
-	public function dropForeignKey($tableName, $schemaName, $referenceName)
-	{
+	public function dropForeignKey($tableName, $schemaName, $referenceName) {
 		return "ALTER TABLE " . $this->prepareTable($tableName, $schemaName) . " DROP FOREIGN KEY `" . $referenceName . "`";
 	}
 
 	/**
 	 * Generates SQL to create a table
 	 */
-	public function createTable($tableName, $schemaName, array $definition)
-	{
+	public function createTable($tableName, $schemaName, array $definition) {
 
 		if (!isset($definition["columns"])) {
 			throw new Exception("The index 'columns' is required in the definition array");
@@ -478,7 +476,7 @@ class MSSQL extends Dialect
 		$table = "N'".$this->prepareTable($tableName, $schemaName)."'";
 
 		if ($ifExists)
-			return $this->_getIfObjectExists($tableName).' DROP TABLE '.$table;
+			return 'IF '.$this->_getObjectExists($tableName).' DROP TABLE '.$table;
 		else 
 			return "DROP TABLE ".$table;
 	}
@@ -503,7 +501,7 @@ class MSSQL extends Dialect
 		$view = "N'".$this->prepareTable($viewName, $schemaName)."'";
 
 		if ($ifExists)
-			return $this->_getIfObjectExists($view, 'V').' DROP VIEW '.$view;
+			return 'IF '.$this->_getObjectExists($view, 'V').' DROP VIEW '.$view;
 		else
 			return 'DROP VIEW '.$view;
 	}
@@ -517,29 +515,35 @@ class MSSQL extends Dialect
 	 * </code>
 	 */
 	public function tableExists($tableName, $schemaName = null) {
+		/*
 		$sql = 'SELECT IF(COUNT(*) > 0, 1, 0) FROM [INFORMATION_SCHEMA].[TABLES] WHERE  [TABLE_TYPE] = "USER TABLE" AND [TABLE_NAME] = "'.$tableName.'" AND [TABLE_SCHEMA] = ';
 
 		if ($schemaName)
 			$sql .= '"'.$schemaName.'"';
 		else 
 			$sql .= 'DATABASE()';
+		*/
+		$table = "N'".$this->prepareTable($tableName, $schemaName)."'";
 
-		return $sql;
+		return 'SELECT CASE WHEN '.$this->_getIfObjectExists($table, 'U'). ' THEN 1 ELSE 0 END';
 	}
 
 	/**
 	 * Generates SQL checking for the existence of a schema.view
 	 */
 	public function viewExists($viewName, $schemaName = null) {
-
+		/*
 		$sql = 'SELECT IF(COUNT(*) > 0, 1, 0) FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_TYPE] = "VIEW" AND [TABLE_NAME] = "'.$viewName.'"  AND [TABLE_SCHEMA] = ';
 		
 		if ($schemaName)
 			$sql .= '"'.$schemaName.'"';
 		else
 			$sql .= 'DATABASE()';
+		*/
 
-		return $sql;
+		$view = "N'".$this->prepareTable($viewName, $schemaName)."'";
+
+		return 'SELECT CASE WHEN '.$this->_getIfObjectExists($table, 'V'). ' THEN 1 ELSE 0 END';
 	}
 
 	/**
@@ -609,7 +613,7 @@ class MSSQL extends Dialect
 	}
 
 
-	protected function _getIfObjectExists($name, $type = 'U') {
+	protected function _getObjectExists($name, $type = 'U') {
 		/*
 		From https://technet.microsoft.com/en-us/library/ms190324.aspx
 		AF = Aggregate function (CLR)
@@ -640,7 +644,7 @@ class MSSQL extends Dialect
 		V = View
 		X = Extended stored procedure
 		*/
-		return 'IF OBJECT_ID('.$name.', "'.$type.'") IS NOT NULL';
+		return 'OBJECT_ID('.$name.', "'.$type.'") IS NOT NULL';
 	}
 
 	/**

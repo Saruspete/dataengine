@@ -71,14 +71,6 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 
 
 	public function describeColumns($table, $schema = null) {
-		$columns;
-		$columnType;
-		$field;
-		$definition;
-		$oldColumn;
-		$sizePattern;
-		$matches;
-		$columnName;
 
 		$oldColumn = null;
 		$sizePattern = "#\\(([0-9]+)(?:,\\s*([0-9]+))*\\)#";
