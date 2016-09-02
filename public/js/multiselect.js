@@ -141,8 +141,9 @@ if (typeof jQuery === 'undefined') {
                         if (this.value) {
                             var $toShow = self.$left.find('option:search("' + this.value + '")').mShow();
                             var $toHide = self.$left.find('option:not(:search("' + this.value + '"))').mHide();
+                            self.$left.find('option:hidden').parent().not( $(":visible").parent() ).mHide();
                         } else {
-                            self.$left.find('option').mShow();
+                            self.$left.find('option, optgroup').mShow();
                         }
                     });
                 }
@@ -153,8 +154,9 @@ if (typeof jQuery === 'undefined') {
                         if (this.value) {
                             var $toShow = self.$right.find('option:search("' + this.value + '")').mShow();
                             var $toHide = self.$right.find('option:not(:search("' + this.value + '"))').mHide();
+                            self.$right.find('option:hidden').parent().not( $(":visible").parent() ).mHide();
                         } else {
-                            self.$right.find('option').mShow();
+                            self.$right.find('option, optgroup').mShow();
                         }
                     });
                 }
