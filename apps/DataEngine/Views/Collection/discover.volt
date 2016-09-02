@@ -16,12 +16,12 @@
 				<option value="{{type}}">{{type}}</option>
 			{% endfor %}
 			</select>
-			<input type="text" id="connectionName" name="Name" value="{{ values['Name'] }}" title="Name" style="width: 100%" /><br />
-			<input type="text" id="connectionUser" name="User" value="{{ values['User'] }}" title="Username" style="width: 100%" /><br />
-			<input type="text" id="connectionPass" name="Pass" value="{{ values['Pass'] }}" title="Password" style="width: 100%" /><br />
-			<input type="text" id="connectionHost" name="Host" value="{{ values['Host'] }}" title="Hostname" style="width: 100%" /><br />
-			<input type="text" id="connectionSchema" name="Schema" value="{{ values['Schema'] }}" title="Schema" style="width: 100%" /><br />
-			<input type="text" id="connectionExtra" name="Extra" value="{{ values['Extra'] }}" title="Extra data" style="width: 100%" /><br />
+			<input type="text" id="connectionName" name="Name" value="{{ values['Name'] }}" title="Name" style="width: 100%; background: url('/images/icons/book.png') 3px 3px no-repeat; padding-left: 25px;" /><br />
+			<input type="text" id="connectionUser" name="User" value="{{ values['User'] }}" title="Username" style="width: 100%; background: url('/images/icons/user.png') 3px 3px no-repeat; padding-left: 25px;" /><br />
+			<input type="text" id="connectionPass" name="Pass" value="{{ values['Pass'] }}" title="Password" style="width: 100%; background: url('/images/icons/key.png') 3px 3px no-repeat; padding-left: 25px;" /><br />
+			<input type="text" id="connectionHost" name="Host" value="{{ values['Host'] }}" title="Hostname" style="width: 100%; background: url('/images/icons/server.png') 3px 3px no-repeat; padding-left: 25px;" /><br />
+			<input type="text" id="connectionSchema" name="Schema" value="{{ values['Schema'] }}" title="Schema" style="width: 100%; background: url('/images/icons/database.png') 3px 3px no-repeat; padding-left: 25px;" /><br />
+			<input type="text" id="connectionExtra" name="Extra" value="{{ values['Extra'] }}" title="Extra data" style="width: 100%; background: url('/images/icons/basket.png') 3px 3px no-repeat; padding-left: 25px;" /><br />
 		</div>
 		<div class="col-sm-2">
 			<input type="submit" name="op" id="btnConnectionTest" value="Test" class="btn btn-block" />

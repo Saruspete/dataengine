@@ -64,7 +64,7 @@ $(document).ready(function($) {
 	})
 */
 
-
+/*
 	$('input[type="text"]').each(function(){
 
 		// Skip undefined attributes
@@ -103,5 +103,6 @@ $(document).ready(function($) {
 		this.value = $(this).attr('title');
 		$(this).addClass('text-label');
 	});
+*/
 
 });
