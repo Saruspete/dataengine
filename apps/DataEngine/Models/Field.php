@@ -43,7 +43,10 @@ class Field extends BaseModel {
 	 * Magic method for Phalcon
 	 */
 	public function initialize() {
-		$this->belongsTo('placeholderId', 'AMPortal\DataEngine\Models\Placeholder', 'id');
+		$this->belongsTo('placeholderId', 'AMPortal\DataEngine\Models\Placeholder', 'id', 
+		array(
+			'alias'	=> 'placeholder',
+		));
 		//$this->belongsTo('id', 'AMPortal\DataEngine\Models\CollectionFields', 'idField');
 	}
 
@@ -63,7 +66,7 @@ class Field extends BaseModel {
 		// Check cache & popuplate if needed
 		if (!isset(self::$_placeholders[$this->idPlaceholder])) {
 			if (!$this->idPlaceholder)
-				throw new \Exception("Canniot request placeholder of non saved Placeholder");
+				throw new \Exception("Cannot request placeholder of non saved Placeholder");
 			
 			// Fetch record
 			self::$_placeholders[$this->idPlaceholder] = Placeholder::findFirst($this->idPlaceholder);

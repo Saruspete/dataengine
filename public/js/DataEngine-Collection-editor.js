@@ -46,9 +46,11 @@ jQuery(document).ready(function($) {
 	$("#fields").multiselect({
 		search: {
 			left: '<input type="text" name="q" class="form-control" placeholder="Search..." />',
-        },
-        sort: false
+		},
+		sort: false
 	});
+
+
 
 	$("#collection").select2({
 		placeholder: "Select / Create new collection",
@@ -61,6 +63,33 @@ jQuery(document).ready(function($) {
 				text: params.term,
 				newOption: true
 			}
+		}
+	});
+	// On change event
+	$("#collection").on("change", function(e) {
+		
+		var collId = $(this).val();
+
+		if (collId != undefined && collId != 0) {
+
+			$.getJSON("/DataEngine/Collection/editorAjaxGetCollectionDetails/"+collId, function(data) {
+			
+				// Already registered entry.
+			
+				$("#fields_to").empty();
+
+				$.each(data, function(phid, data) {
+					var opt = $("<option></option>")
+						.text(data.name)
+						.val(data.id);
+					$("#collection").append(opt);
+				});
+
+				// Required due to https://github.com/select2/select2/issues/4104
+				if ( ! $("#collection").length ) {
+					$("#collection").append($("<option></option>"));
+				}
+			});
 		}
 	});
 });

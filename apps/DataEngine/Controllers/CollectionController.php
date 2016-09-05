@@ -35,10 +35,8 @@ class CollectionController extends ControllerBase {
 		// Check if we have some post data to save
 		if ($this->request->isPost()) {
 
-			$a_fields = $this->request->getPost('fields');
 			$m_collId = $this->request->getPost('collection');
-
-			$this->flash->error("hello");
+			$a_fields = $this->request->getPost('fields');
 
 
 			// Is an INT, check for its ID
@@ -121,10 +119,62 @@ class CollectionController extends ControllerBase {
 		echo json_encode($a_results);
 	}
 
+	/**
+	 *
+	 */
 	public function editorAjaxGetCollectionsAction() {
 
 		echo $this->_ajaxDisplayList(Collection::find());
 	
+	}
+
+	/**
+	 *
+	 */
+	public function editorAjaxGetCollectionDetailsAction($i_id) {
+		$this->view->setRenderLevel(View::LEVEL_NO_RENDER);
+
+		$c = Collection::findFirst($i_id);
+		$a_placeholders = array();
+		$a_fields = array();
+
+		foreach ($c->getFields() as $o_field) {
+
+			$i_phid = $o_field->idPlaceholder;
+
+			// New placeholder
+			if ( empty($a_placeholders[$i_phid]) ) {
+				$o_ph = $o_field->getPlaceholder();
+				$a_placeholders[$i_phid] = array(
+					'id'	=> $o_ph->getId(),
+					'name'	=> $o_ph->name,
+					'path'	=> $o_ph->path,
+					'fields'=> array(),
+				);
+			}
+
+			$a_placeholders[$i_phid]['fields'][] = array(
+				'id'			=> $o_field->getId(),
+				'idPlaceholder'	=> $o_field->idPlaceholder,
+				'name'			=> $o_field->name,
+				'path'			=> $o_field->path,
+				'source'		=> $o_field->source,
+				'format'		=> $o_field->format,
+			);
+		}
+
+		$a_results = array(
+			'name'		=> $c->name,
+			'idPhPrim'	=> $c->getPlaceholderPrimaryId(),
+			'placeholders' => array(),
+		);
+
+		foreach ($a_placeholders as $a_ph) {
+			$a_results['placeholders'][] = $a_ph;
+		}
+
+		echo json_encode($a_results);
+
 	}
 
 
@@ -134,6 +184,9 @@ class CollectionController extends ControllerBase {
 	// 
 	// ====================================================
 
+	/**
+	 *
+	 */
 	public function discoverAction() {
 
 		$s_results = '';
@@ -236,7 +289,6 @@ class CollectionController extends ControllerBase {
 			Connection::find($i_cid),
 			array('name','type','username','hostname','hostport','resource','extra')
 		);
-
 	}
 
 	/**
@@ -315,6 +367,9 @@ class CollectionController extends ControllerBase {
 	// 
 	// ====================================================
 
+	/**
+	 *
+	 */
 	private function _ajaxDisplayList($a_list, $a_params = false) {
 
 		$this->view->setRenderLevel(View::LEVEL_NO_RENDER);

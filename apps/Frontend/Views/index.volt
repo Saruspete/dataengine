@@ -28,12 +28,15 @@
         </nav>
 
         <div class="container-fluid">
-        {{ flash.output() }}
-        {{ content() }}
-        <hr />
-        <footer>
-            <p>DataEngine Frontend</p>
-        </footer>
+            <!-- Flash -->
+            {{ flash.output() }}
+            <!-- End Flash -->
+
+            {{ content() }}
+            <hr />
+            <footer>
+                <p>DataEngine Frontend</p>
+            </footer>
         </div>
 
         {{ javascript_include('js/jquery-3.1.0.min.js') }}

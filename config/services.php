@@ -11,7 +11,7 @@ use Phalcon\Mvc\Url as UrlResolver;
 use Phalcon\Session\Adapter\Files as SessionAdapter;
 use Phalcon\Mvc\View;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
-use Phalcon\Flash\Direct as Flash;
+use Phalcon\Flash\Session as Flash;
 
 use AMPortal\Frontend\Library\Elements;
 
@@ -130,7 +130,7 @@ $di->setShared('session', function () {
  * Register the session flash service with the Twitter Bootstrap classes
  * HINT : Already created by FactoryDefault as : Phalcon\Flash\Direct
  */
-$di->set('flash', function () {
+$di->setShared('flash', function () {
 	return new Flash([
 		'error'   => 'alert alert-danger',
 		'success' => 'alert alert-success',
