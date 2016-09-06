@@ -566,9 +566,9 @@ class MSSQL extends Dialect
 	 * </code>
 	 */
 	public function listTables($schemaName = null) {
-		$sql = 'SELECT [TABLE_NAME] FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_TYPE] = "BASE TABLE"';
+		$sql = "SELECT [TABLE_NAME] FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_TYPE] = 'BASE TABLE'";
 		if ($schemaName) {
-			$sql .= 'AND [TABLE_SCHEMA] = "' . $schemaName . '"';
+			$sql .= " AND [TABLE_SCHEMA] = '" . $schemaName . "'";
 		}
 		return $sql . ' ORDER BY [TABLE_NAME]';
 	}
@@ -578,13 +578,31 @@ class MSSQL extends Dialect
 	 */
 	public function describeIndexes($table, $schema = null) {
 
-		$sql = 'SELECT DB_NAME() AS Database_Name, sc.name AS Schema_Name, o.name AS Table_Name, i.name AS Index_Name, i.type_desc AS Index_Type';
-		$sql .= ' FROM '.$this->prepareTable('indexes', 'sys', 'i').' INNER JOIN '.$this->prepareTable('objects', 'sys', 'o').' ON i.object_id = o.object_id INNER JOIN '.$this->prepareTable('schemas', 'sys', 'sc').' ON o.schema_id = sc.schema_id ';
-		$sql .= ' WHERE i.name IS NOT NULL AND o.type = "U" AND Table_Name = "'.$table.'" ';
+		$sql = "SELECT DB_NAME() AS Database_Name, sc.name AS Schema_Name, "
+		. "o.name AS Table_Name, i.name AS Index_Name, i.type_desc AS Index_Type"
+		. " FROM '.$this->prepareTable('indexes', 'sys', 'i') "
+		. "   INNER JOIN ".$this->prepareTable('objects', 'sys', 'o')." ON i.object_id = o.object_id "
+		. "   INNER JOIN ".$this->prepareTable('schemas', 'sys', 'sc')." ON o.schema_id = sc.schema_id "
+		. " WHERE i.name IS NOT NULL "
+		. "   AND o.type = 'U'"
+		. "   AND Table_Name = '".$table."'";
+
 		if ($schemas)
-			$sql .= ' AND Schema_Name = "'.$schema.'"';
+			$sql .= " AND Schema_Name = '".$schema."'";
+		
 		$sql .= ' ORDER BY o.name, i.type';
 		
+		/*
+		$sql = 'SELECT t.name AS TableName, ind.name AS IndexName, ind.index_id AS IndexId, ic.index_column_id AS ColumnId, col.name AS ColumnName, ind.*, ic.*, col.*'
+		. ' FROM sys.indexes ind '
+		. ' INNER JOIN sys.index_columns AS ic ON ind.object_id = ic.object_id AND ind.index_id = ic.index_id'
+		. ' INNER JOIN sys.columns AS col ON ic.object_id = col.object_id AND ic.column_id = col.column_id'
+		. ' INNER JOIN sys.tables AS t ON ind.object_id = t.object_id'
+		. ' WHERE t.name = "'.$table.'"'
+		(($schema) ? ' AND ' : '')
+		. ' ORDER BY t.name, ind.name, ind.index_id, ic.index_column_id'
+		*/
+
 		return $sql;
 	}
 
