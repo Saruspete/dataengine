@@ -1,35 +1,34 @@
 $(document).ready(function($) {
 
-	$("#connectionId").select2({
+	$("#connectionid").select2({
 		placeholder: "Select / Create new connection",
-		allowClear:	true,
 		theme:		"classic",
 	});
 
-	$("#connectionId").on("change", function(e) {
+	$("#connectionid").on("change", function(e) {
 		connId = $(this).val();
 		
 		// Already registered entry.
 		if (connId != undefined && connId != 0) {
 
-			$.getJSON("/DataEngine/Collection/discoverAjaxGetConnectionInfo/"+connId, function(data) {
+			$.getJSON("/DataEngine/Connection/editorAjaxGetConnectionInfo/"+connId, function(data) {
 				var res = data[0];
 				var hst = res.hostname;
-				if (res.hostport)
+				if (res.hostport != '0')
 					hst += ":"+res.hostport;
-				$('#connectionName').val(res.name).change();
-				$('#connectionType').val(res.type).change();
-				$('#connectionHost').val(hst).change();
-				$('#connectionUser').val(res.username).change();
-				$('#connectionPass').val("(unchanged)").change();
-				$('#connectionSchema').val(res.resource).change();
-				$('#connectionExtra').val(res.extra).change();
+				$('#connectionname').val(res.name).change();
+				$('#connectiontype').val(res.type).change();
+				$('#connectionhost').val(hst).change();
+				$('#connectionusername').val(res.username).change();
+				$('#connectionpassword').val("(unchanged)").change();
+				$('#connectionschema').val(res.resource).change();
+				$('#connectionextra').val(res.extra).change();
 			});
 		}
 		// New entry
 		else {
 
-			var flds = new Array('Host', 'User', 'Pass', 'Schema', 'Extra');
+			var flds = new Array('name', 'host', 'username', 'password', 'schema', 'extra');
 			for (fldId in flds) {
 				fld = flds[fldId];
 				$('#connection'+fld).val('').change();
@@ -39,7 +38,7 @@ $(document).ready(function($) {
 	});
 
 
-	$("#connectionType").select2({
+	$("#connectiontype").select2({
 		theme:		"classic"
 	});
 

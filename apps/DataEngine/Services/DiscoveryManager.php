@@ -27,10 +27,12 @@ class DiscoveryManager extends BaseManager {
 		}
 
 		// Call the discovery
-		$o_discovery->discoverStructure($c);
-		$o_discovery->discoverRelations($c);
+		$a_results = array();
+		$a_results['structure'] = $o_discovery->discoverStructure($c);
+		$a_results['relations'] = $o_discovery->discoverRelations($c);
 
-		return true;
+		// TODO: Add more details about discovery...
+		return $a_results;
 	}
 
 	/**

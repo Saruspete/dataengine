@@ -81,6 +81,13 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 
 		$a_placeholders = array();
 		$a_bases = array();
+		$a_results = array(
+			'new'		=> array(),
+			'updated'	=> array(),
+			'deleted'	=> array(),
+			'unchanged'	=> array(),
+		);
+
 
 		if ($conn->resource) {
 			$a_bases[] = $conn->resource;
@@ -89,19 +96,16 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 			$a_bases = $this->_listDatabases($db);
 		}
 
-		echo "<h2>Discovering structure</h2>";
-
 		// List databases
 		foreach ($a_bases as $s_base) {
-			echo "<h3>$s_base</h3>";
 
 			// List tables
 			foreach ($this->_listTables($db, $s_base) as $s_table) {
 
+				$s_phStatus = 'unchanged';
+
 				$s_phpath = $s_base.'.'.$s_table;
 				$s_phname = $s_base.' - '.$s_table;
-
-//				echo '<h2>', $s_phname, ' (', $s_phpath,')</h2>';
 
 				// Try to get an existing placeholder
 				$o_ph = Placeholder::findFirst(array(
@@ -120,6 +124,8 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 					$o_ph->type = 'origin';
 					$o_ph->idConnection = $i_connId;
 
+					// Createing a new one
+					$s_phStatus = 'new';
 				}
 
 				// Get the number of rows in the placeholder
@@ -150,12 +156,9 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 				// Get the indexes for this table and list them per-column
 				$a_indexes = array();
 				foreach ($this->_listIndexes($db, $s_base, $s_table) as $o_index) {
-
 					foreach ($o_index->getColumns() as $s_col) { 
 						$a_indexes[$s_col] = $o_index;
-//						echo "=== Index for $s_col : ", var_dump($o_index), "==";
 					}
-//					echo "<pre>", print_r($o_index, true), "</pre>";
 				}
 
 
@@ -163,7 +166,6 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 				// List fields
 				foreach ($this->_listColumns($db, $s_base, $s_table) as $o_column) { 
 					
-//					echo '<pre>', var_dump($o_column), '</pre>';
 					$s_path = $o_column->getName();
 
 					// Find an exsiting record for this field
@@ -176,6 +178,8 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 
 					// If the field was not found
 					if (!$o_fld) {
+
+						$s_phStatus = 'updated';
 
 						$o_fld = new Field();
 
@@ -283,7 +287,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 
 
 
-			// List views
+			// TODO: List views
 			foreach ($this->_listViews($db, $s_base) as $s_view) {
 				echo "<h1>View : ",$s_view,"</h1>";
 			}
@@ -311,8 +315,14 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 		//$s_connUid = $this->getConnectionUid($conn);
 		$i_connId = $conn->id;
 
+
 		$a_placeholders = array();
 		$a_bases = array();
+		$a_results = array(
+			'new'		=> array(),
+			'updated'	=> array(),
+			'deleted'	=> array(),
+		);
 
 		if ($conn->resource) {
 			$a_bases[] = $conn->resource;
@@ -367,9 +377,6 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 						throw new \Exception("Unable to get referenced placeholder object");
 					if (!$o_locPlaceholder)
 						throw new \Exception("Unable to get local placeholder object");
-
-//echo print_r(array_keys($this->_placeholders));
-//echo var_dump($o_refPlaceholder);
 
 
 					// Build the clause to find an existing link

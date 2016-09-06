@@ -79,6 +79,10 @@ class Collection extends BaseModel {
 		return $this;
 	}
 
+	public function setPlaceholderPrimaryId($i_phid) {
+		$this->idPlaceholderPrimary = $i_phid;
+		return $this;
+	}
 
 	public function setPlaceholderPrimary(Placeholder $ph) {
 		$this->idPlaceholderPrimary = $ph->getId();
