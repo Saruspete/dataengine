@@ -646,19 +646,19 @@ class MSSQL extends Dialect {
 	public function describeIndexes($table, $schema = null) {
 
 		// Using SYS for this one...
-		$sql = "SELECT DB_NAME() AS DatabaseName, sc.name AS SchemaName, "
-		. "t.name AS TableName, ind.name AS IndexName, ind.type_desc AS IndexType"
+		$sql = "SELECT DB_NAME() AS DatabaseName, s.name AS SchemaName, "
+		. "t.name AS TableName, c.name AS ColumnName, i.name AS IndexName, i.type_desc AS IndexType"
 
-		. " FROM sys.indexes AS ind"
-		. "   INNER JOIN sys.index_columns AS ic ON ind.object_id = ic.object_id AND ind.index_id = ic.index_id"
-		. "   INNER JOIN sys.columns AS col ON ic.object_id = col.object_id AND ic.column_id = col.column_id"
-		. "   INNER JOIN sys.tables AS t ON ind.object_id = t.object_id"
-		. "   INNER JOIN sys.schemas AS sc ON t.schema_id = sc.schema_id "
-		. " WHERE ind.name IS NOT NULL "
+		. " FROM sys.indexes AS i"
+		. "   INNER JOIN sys.index_columns AS ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id"
+		. "   INNER JOIN sys.columns AS c ON ic.object_id = c.object_id AND ic.column_id = c.column_id"
+		. "   INNER JOIN sys.tables AS t ON i.object_id = t.object_id"
+		. "   INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id "
+		. " WHERE i.name IS NOT NULL "
 //		. "   AND o.type = 'U'"
 		. "   AND t.name = '".$table."'";
 
-		if ($schemas)
+		if ($schema)
 			$sql .= " AND SchemaName = '".$schema."'";
 
 		$sql .= ' ORDER BY t.name, ind.name, ind.index_id, ic.index_column_id';
