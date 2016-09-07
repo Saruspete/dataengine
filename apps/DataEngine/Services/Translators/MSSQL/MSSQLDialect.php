@@ -554,8 +554,9 @@ class MSSQL extends Dialect
 	 * </code>
 	 */
 	public function describeColumns($table, $schema = null) {
-		//return "DESCRIBE " . $this->prepareTable($table, $schema);
-		return 'EXEC sp_columns '.$this->prepareTable($table, $schema);
+		
+		return "SELECT [TABLE_CATALOG], [TABLE_SCHEMA], [TABLE_NAME], [COLUMN_NAME], [COLUMN_DEFAULT], [IS_NULLABLE], [DATA_TYPE], [CHARACTER_MAXIMUM_LENGTH] "
+		. " FROM ".$this->prepareTable("COLUMNS", "INFORMATION_SCHEMA");
 	}
 
 	/**
@@ -574,23 +575,43 @@ class MSSQL extends Dialect
 	}
 
 	/**
+	 * List all views in database
+	 *
+	 * <code>
+	 *     print_r($dialect->listTables("blog"))
+	 * </code>
+	 */
+	public function listviews($schemaName = null) {
+		$sql = "SELECT [TABLE_NAME] FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_TYPE] = 'VIEW'";
+
+		if ($schemaName)
+			$sql .= " AND [TABLE_SCHEMA] = '" . $schemaName . "'";
+
+		return $sql . ' ORDER BY [TABLE_NAME]';
+	}
+
+
+	/**
 	 * Generates SQL to query indexes on a table
 	 */
 	public function describeIndexes($table, $schema = null) {
 
-		$sql = "SELECT DB_NAME() AS Database_Name, sc.name AS Schema_Name, "
-		. "o.name AS Table_Name, i.name AS Index_Name, i.type_desc AS Index_Type"
-		. " FROM '.$this->prepareTable('indexes', 'sys', 'i') "
-		. "   INNER JOIN ".$this->prepareTable('objects', 'sys', 'o')." ON i.object_id = o.object_id "
-		. "   INNER JOIN ".$this->prepareTable('schemas', 'sys', 'sc')." ON o.schema_id = sc.schema_id "
-		. " WHERE i.name IS NOT NULL "
-		. "   AND o.type = 'U'"
-		. "   AND Table_Name = '".$table."'";
+		$sql = "SELECT DB_NAME() AS DatabaseName, sc.name AS SchemaName, "
+		. "t.name AS TableName, ind.name AS IndexName, ind.type_desc AS IndexType"
+
+		. " FROM ".$this->prepareTable('indexes', 'sys', 'ind')
+		. "   INNER JOIN ".$this->prepareTable('index_columns','sys', 'ic'). " ON ind.object_id = ic.object_id AND ind.index_id = ic.index_id"
+		. "   INNER JOIN ".$this->prepareTable('columns', 'sys', 'col')." ON ic.object_id = col.object_id AND ic.column_id = col.column_id"
+		. "   INNER JOIN ".$this->prepareTable('tables', 'sys', 't')." ON ind.object_id = t.object_id"
+		. "   INNER JOIN ".$this->prepareTable('schemas', 'sys', 'sc')." ON t.schema_id = sc.schema_id "
+		. " WHERE ind.name IS NOT NULL "
+//		. "   AND o.type = 'U'"
+		. "   AND t.name = '".$table."'";
 
 		if ($schemas)
-			$sql .= " AND Schema_Name = '".$schema."'";
-		
-		$sql .= ' ORDER BY o.name, i.type';
+			$sql .= " AND SchemaName = '".$schema."'";
+
+		$sql .= ' ORDER BY t.name, ind.name, ind.index_id, ic.index_column_id';
 		
 		/*
 		$sql = 'SELECT t.name AS TableName, ind.name AS IndexName, ind.index_id AS IndexId, ic.index_column_id AS ColumnId, col.name AS ColumnName, ind.*, ic.*, col.*'

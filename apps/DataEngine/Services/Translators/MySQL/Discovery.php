@@ -33,24 +33,28 @@ class Discovery extends DiscoverySQL {
 		return $sth->fetchAll(PDO::FETCH_COLUMN, 0);
 	}
 
-	protected function _listTables(PdoAdapter $db, $dbname) {
+	protected function _listSchemas(PdoAdapter $db, $dbname) {
+		// MySQL Doesn't care about schemas
+		return 'default';
+	}
+
+	protected function _listTables(PdoAdapter $db, $dbname, $schemaname) {
 		return $db->listTables($dbname);
 	}
 
-	protected function _listViews(PdoAdapter $db, $dbname) {
+	protected function _listViews(PdoAdapter $db, $dbname, $schemaname) {
 		return $db->listViews($dbname);
 	}
 
-
-	protected function _listColumns(PdoAdapter $db, $dbname, $tablename) {
+	protected function _listColumns(PdoAdapter $db, $dbname, $schemaname, $tablename) {
 		return $db->describeColumns($tablename, $dbname);
 	}
 
-	protected function _listIndexes(PdoAdapter $db, $dbname, $tablename) {
+	protected function _listIndexes(PdoAdapter $db, $dbname, $schemaname, $tablename) {
 		return $db->describeIndexes($tablename, $dbname);
 	}
 
-	protected function _listReferences(PdoAdapter $db, $dbname, $tablename) {
+	protected function _listReferences(PdoAdapter $db, $dbname, $schemaname, $tablename) {
 		return $db->describeReferences($tablename, $dbname);
 	}
 

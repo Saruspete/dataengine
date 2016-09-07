@@ -79,7 +79,7 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 
 		/**
 		 * Get the SQL to describe a table
-		 * We're using FETCH_NUM to fetch the columns
+		 * We're using FETCH_ASSOC to fetch the columns
 		 * Get the describe
 		 * Field Indexes: 0:name, 1:type, 2:not null, 3:key, 4:default, 5:extra
 		 */
@@ -90,182 +90,122 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 			 */
 			$definition = ["bindType" => Column::BIND_PARAM_STR];
 
-			/**
-			 * By checking every column type we convert it to a Phalcon\Db\Column
-			 */
-			$columnType = $field[1];
+			
+			switch ($field['DATA_TYPE']) {
 
-			while (1) {
-
-				/**
-				 * Enum are treated as char
-				 */
-				if (memstr($columnType, "enum")) {
+				// ENUM
+				case 'enum':
 					$definition["type"] = Column::TYPE_CHAR;
 					break;
-				}
-
-				/**
-				 * Smallint/Bigint/Integers/Int are int
-				 */
-				if (memstr($columnType, "bigint")) {
-					$definition["type"] = Column::TYPE_BIGINTEGER;
-					$definition["isNumeric"] = true;
-					$definition["bindType"] = Column::BIND_PARAM_INT;
-					break;
-				}
-
-				/**
-				 * Smallint/Bigint/Integers/Int are int
-				 */
-				if (memstr($columnType, "int")) {
-					$definition["type"] = Column::TYPE_INTEGER;
-					$definition["isNumeric"] = true;
-					$definition["bindType"] = Column::BIND_PARAM_INT;
-					break;
-				}
-
-				/**
-				 * Varchar are varchars
-				 */
-				if (memstr($columnType, "varchar")) {
+				
+				
+				// Strings
+				case 'varchar':
+				case 'nvarchar':
 					$definition["type"] = Column::TYPE_VARCHAR;
 					break;
-				}
 
-				/**
-				 * Special type for datetime
-				 */
-				if (memstr($columnType, "datetime")) {
-					$definition["type"] = Column::TYPE_DATETIME;
-					break;
-				}
-
-				/**
-				 * Chars are chars
-				 */
-				if (memstr($columnType, "char")) {
+				case 'char':
+				case 'nchar':
 					$definition["type"] = Column::TYPE_CHAR;
 					break;
-				}
-
-				/**
-				 * Date are dates
-				 */
-				if (memstr($columnType, "date")) {
-					$definition["type"] = Column::TYPE_DATE;
-					break;
-				}
-
-				/**
-				 * Timestamp are dates
-				 */
-				if (memstr($columnType, "timestamp")) {
-					$definition["type"] = Column::TYPE_TIMESTAMP;
-					break;
-				}
-
-				/**
-				 * Text are varchars
-				 */
-				if (memstr($columnType, "text")) {
+				
+				case 'text':
+				case 'ntext':
+				case 'xml':
 					$definition["type"] = Column::TYPE_TEXT;
 					break;
-				}
-
-				/**
-				 * Decimals are floats
-				 */
-				if (memstr($columnType, "decimal")){
+				
+				// Date and Time
+				case 'datetime':
+				case 'datetime2':
+				case 'smalldatetime':
+				case 'datetimeoffset':
+					$definition["type"] = Column::TYPE_DATETIME;
+					break;
+				
+				case 'date':
+					$definition["type"] = Column::TYPE_DATE;
+					break;
+				
+				case 'timestamp':
+				case 'rowversion':
+					$definition["type"] = Column::TYPE_TIMESTAMP;
+					break;
+				
+				// Integers
+				case 'bigint':
+					$definition["type"] = Column::TYPE_BIGINTEGER;
+				case 'smallint':
+				case 'int':
+					if (!isset($definition['type']))
+						$definition["type"] = Column::TYPE_INTEGER;
+					
+					$definition["isNumeric"] = true;
+					$definition["bindType"] = Column::BIND_PARAM_INT;
+					break;
+				
+				// Decimal values
+				case "decimal":
+				case "numeric":
+				case 'money':
+				case 'smallmoney':
 					$definition["type"] = Column::TYPE_DECIMAL;
 					$definition["isNumeric"] = true;
 					$definition["bindType"] = Column::BIND_PARAM_DECIMAL;
 					break;
-				}
 
-				/**
-				 * Doubles
-				 */
-				if (memstr($columnType, "double")){
+				case "double":
 					$definition["type"] = Column::TYPE_DOUBLE;
 					$definition["isNumeric"] = true;
 					$definition["bindType"] = Column::BIND_PARAM_DECIMAL;
 					break;
-				}
 
-				/**
-				 * Float/Smallfloats/Decimals are float
-				 */
-				if (memstr($columnType, "float")) {
+				case "real":
+				case "float":
 					$definition["type"] = Column::TYPE_FLOAT;
 					$definition["isNumeric"] = true;
 					$definition["bindType"] = Column::BIND_PARAM_DECIMAL;
 					break;
-				}
+				
 
-				/**
-				 * Boolean
-				 */
-				if (memstr($columnType, "bit")) {
+				case "bit":
 					$definition["type"] = Column::TYPE_BOOLEAN;
 					$definition["bindType"] = Column::BIND_PARAM_BOOL;
 					break;
-				}
-
-				/**
-				 * Tinyblob
-				 */
-				if (memstr($columnType, "tinyblob")) {
+				
+				// Binary fields
+				case 'binary':
+				case 'varbinary':
+				case "tinyblob":
 					$definition["type"] = Column::TYPE_TINYBLOB;
 					$definition["bindType"] = Column::BIND_PARAM_BOOL;
 					break;
-				}
-
-				/**
-				 * Mediumblob
-				 */
-				if (memstr($columnType, "mediumblob")) {
+				
+				case "mediumblob":
 					$definition["type"] = Column::TYPE_MEDIUMBLOB;
 					break;
-				}
 
-				/**
-				 * Longblob
-				 */
-				if (memstr($columnType, "longblob")) {
+				case "longblob":
 					$definition["type"] = Column::TYPE_LONGBLOB;
 					break;
-				}
 
-				/**
-				 * Blob
-				 */
-				if (memstr($columnType, "blob")) {
+				case 'image':
+				case "blob":
 					$definition["type"] = Column::TYPE_BLOB;
 					break;
-				}
+				
 
-				/**
-				 * By default is string
-				 */
-				$definition["type"] = Column::TYPE_VARCHAR;
-				break;
+				default:
+					$definition["type"] = Column::TYPE_VARCHAR;
+					break;
 			}
 
-			/**
-			 * If the column type has a parentheses we try to get the column size from it
-			 */
-			if (memstr($columnType, "(")) {
-				$matches = null;
-				if (preg_match($sizePattern, $columnType, $matches)) {
-					if (isset($matches[1])) {
-						$definition["size"] = (int) $matches[1];
-					}
-					if (isset($matches[2])) {
-						$definition["scale"] = (int) $matches[2];
-					}
-				}
-			}
+
+			
+			$definition["size"] = (int) $field['CHARACTER_MAXIMUM_LENGTH'];
+			//$definition["scale"] = (int) $matches[2];
+			
 
 			/**
 			 * Check if the column is unsigned, only MySQL support this
@@ -338,8 +278,8 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 		
 		$indexes = [];
 		foreach ($this->fetchAll($this->_dialect->describeIndexes($table, $schema), Db::FETCH_ASSOC) as $index) {
-			$keyName = $index["Key_name"];
-			$indexType = $index["Index_type"];
+			$keyName = $index["IndexName"];
+			$indexType = $index["IndexType"];
 
 			if (!isset($indexes[$keyName])) {
 				$indexes[$keyName] = [];
@@ -351,10 +291,10 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 				$columns = $indexes[$keyName]["columns"];
 			}
 
-			$columns[] = $index["Column_name"];
+			$columns[] = $index["ColumnName"];
 			$indexes[$keyName]["columns"] = $columns;
 
-			if (keyName == "PRIMARY") {
+			if ($keyName == "PRIMARY") {
 				$indexes[$keyName]["type"] = "PRIMARY";
 			} elseif ($indexType == "FULLTEXT") {
 				$indexes[$keyName]["type"] = "FULLTEXT";
