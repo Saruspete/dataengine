@@ -37,12 +37,14 @@ class Discovery extends DiscoverySQL {
 	//
 
 	protected function _listDatabases(PdoAdapter $db) {
-		$sth = $db->query('SHOW DATABASES WHERE `Database` NOT RLIKE "(performance|information)_schema"');
+		$sth = $db->query('SELECT name FROM [sys].[databases]');
 		return $sth->fetchAll(PDO::FETCH_COLUMN, 0);
 	}
 
 	protected function _listSchemas(PdoAdapter $db, $dbname) {
-		return array('dbo');
+		sth = $db->query("SELECT [SCHEMA_NAME] FROM [INFORMATION_SCHEMA].[SCHEMATA] WHERE [CATALOG_NAME] = '".$dbname."'");
+		return $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+		//return array('dbo');
 	}
 
 	protected function _listTables(PdoAdapter $db, $dbname, $schemaname) {
@@ -52,7 +54,6 @@ class Discovery extends DiscoverySQL {
 	protected function _listViews(PdoAdapter $db, $dbname, $schemaname) {
 		return $db->listViews($schemaname);
 	}
-
 
 	protected function _listColumns(PdoAdapter $db, $dbname, $schemaname, $tablename) {
 		return $db->describeColumns($tablename, $schemaname);

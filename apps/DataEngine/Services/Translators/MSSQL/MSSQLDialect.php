@@ -606,18 +606,7 @@ class MSSQL extends Dialect {
 		return 'SELECT CASE WHEN '.$this->_getIfObjectExists($table, 'V'). ' THEN 1 ELSE 0 END';
 	}
 
-	/**
-	 * Generates SQL describing a table
-	 *
-	 * <code>
-	 *    print_r($dialect->describeColumns("posts"));
-	 * </code>
-	 */
-	public function describeColumns($table, $schema = null) {
-		
-		return "SELECT [TABLE_CATALOG], [TABLE_SCHEMA], [TABLE_NAME], [COLUMN_NAME], [COLUMN_DEFAULT], [IS_NULLABLE], [DATA_TYPE], [CHARACTER_MAXIMUM_LENGTH] "
-		. " FROM [INFORMATION_SCHEMA].[COLUMNS]";
-	}
+
 
 	/**
 	 * List all tables in database
@@ -656,6 +645,7 @@ class MSSQL extends Dialect {
 	 */
 	public function describeIndexes($table, $schema = null) {
 
+		// Using SYS for this one...
 		$sql = "SELECT DB_NAME() AS DatabaseName, sc.name AS SchemaName, "
 		. "t.name AS TableName, ind.name AS IndexName, ind.type_desc AS IndexType"
 
@@ -685,6 +675,22 @@ class MSSQL extends Dialect {
 		*/
 
 		return $sql;
+	}
+
+
+	/**
+	 * Generates SQL describing a table
+	 *
+	 * <code>
+	 *    print_r($dialect->describeColumns("posts"));
+	 * </code>
+	 */
+	public function describeColumns($table, $schema = null) {
+		
+		// I Should use information_schema, but I also need to know the primary key, so SYS
+		return "SELECT [TABLE_CATALOG], [TABLE_SCHEMA], [TABLE_NAME], [COLUMN_NAME], [COLUMN_DEFAULT], [IS_NULLABLE], [DATA_TYPE], [CHARACTER_MAXIMUM_LENGTH], [ORDINAL_POSITION], [NUMERIC_PRESISION], [NUMERIC_PRECISION_RADIX], [NUMERIC_SCALE], [DATETIME_PRECISION], [CHARACTER_SET_NAME], [COLLATION_NAME] "
+		. " FROM [INFORMATION_SCHEMA].[COLUMNS]"
+		. " ORDER BY [TABLE_CATALOG], [TABLE_SCHEMA], [TABLE_NAME], [COLUMN_NAME], [ORDINAL_POSITION]"
 	}
 
 	/**

@@ -75,8 +75,7 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 	public function describeColumns($table, $schema = null) {
 
 		$oldColumn = null;
-		$sizePattern = "#\\(([0-9]+)(?:,\\s*([0-9]+))*\\)#";
-
+		
 		$columns = [];
 
 		/**
@@ -210,53 +209,46 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 			
 
 			/**
-			 * Check if the column is unsigned, only MySQL support this
-			 */
-			if (memstr($columnType, "unsigned")) {
-				$definition["unsigned"] = true;
-			}
-
-			/**
 			 * Positions
 			 */
 			if ($oldColumn == null) {
 				$definition["first"] = true;
 			} else {
-				$definition["after"] = oldColumn;
+				$definition["after"] = $oldColumn;
 			}
 
 			/**
 			 * Check if the field is primary key
 			 */
-			if ($field[3] == "PRI") {
-				$definition["primary"] = true;
-			}
+//			if ($field[3] == "PRI") {
+//				$definition["primary"] = true;
+//			}
 
 			/**
 			 * Check if the column allows null values
 			 */
-			if ($field[2] == "NO") {
-				$definition["notNull"] = true;
-			}
+//			if ($field[2] == "NO") {
+//				$definition["notNull"] = true;
+//			}
 
 			/**
 			 * Check if the column is auto increment
 			 */
-			if ($field[5] == "auto_increment") {
-				$definition["autoIncrement"] = true;
-			}
+//			if ($field[5] == "auto_increment") {
+//				$definition["autoIncrement"] = true;
+//			}
 
 			/**
 			 * Check if the column is default values
 			 */
-			if (!is_null($field[4])) {
+			if (!is_null($field['COLUMN_DEFAULT'])) {
 				$definition["default"] = $field[4];
 			}
 
 			/**
 			 * Every route is stored as a Phalcon\Db\Column
 			 */
-			$columnName = $field[0];
+			$columnName = $field['COLUMN_NAME'];
 			$columns[] = new Column($columnName, $definition);
 			$oldColumn = $columnName;
 		}

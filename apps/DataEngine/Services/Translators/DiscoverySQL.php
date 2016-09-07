@@ -62,8 +62,8 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 		}
 
 		// Escape simple elements with only one object
-		if (strpos($str, ".") !== false) {
-			if ($escapeCharLeft != "" && $str != "*")
+		if (strpos($str, ".") === false) {
+			if ($escapeLeft != "" && $str != "*")
 				return $escapeLeft . $str . $escapeRight;
 
 			// No escape chars or "*"
