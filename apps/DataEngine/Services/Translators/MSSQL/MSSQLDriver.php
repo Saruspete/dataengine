@@ -288,6 +288,7 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 			$columns[] = $index["ColumnName"];
 			$indexes[$keyName]["columns"] = $columns;
 
+/*
 			if ($keyName == "PRIMARY") {
 				$indexes[$keyName]["type"] = "PRIMARY";
 			} elseif ($indexType == "FULLTEXT") {
@@ -297,6 +298,7 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 			} else {
 				$indexes[$keyName]["type"] = null;
 			}
+*/
 		}
 
 		$indexObjects = [];

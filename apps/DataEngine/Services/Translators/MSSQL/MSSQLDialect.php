@@ -661,7 +661,7 @@ class MSSQL extends Dialect {
 		if ($schema)
 			$sql .= " AND SchemaName = '".$schema."'";
 
-		$sql .= ' ORDER BY t.name, ind.name, ind.index_id, ic.index_column_id';
+		$sql .= ' ORDER BY t.name, i.name, i.index_id, ic.index_column_id';
 		
 		/*
 		$sql = 'SELECT t.name AS TableName, ind.name AS IndexName, ind.index_id AS IndexId, ic.index_column_id AS ColumnId, col.name AS ColumnName, ind.*, ic.*, col.*'
