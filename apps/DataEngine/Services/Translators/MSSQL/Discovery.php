@@ -42,7 +42,7 @@ class Discovery extends DiscoverySQL {
 	}
 
 	protected function _listSchemas(PdoAdapter $db, $dbname) {
-		sth = $db->query("SELECT [SCHEMA_NAME] FROM [INFORMATION_SCHEMA].[SCHEMATA] WHERE [CATALOG_NAME] = '".$dbname."'");
+		$sth = $db->query("SELECT [SCHEMA_NAME] FROM [INFORMATION_SCHEMA].[SCHEMATA] WHERE [CATALOG_NAME] = '".$dbname."'");
 		return $sth->fetchAll(PDO::FETCH_COLUMN, 0);
 		//return array('dbo');
 	}
