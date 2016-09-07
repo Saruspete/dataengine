@@ -659,7 +659,7 @@ class MSSQL extends Dialect {
 		. "   AND t.name = '".$table."'";
 
 		if ($schema)
-			$sql .= " AND SchemaName = '".$schema."'";
+			$sql .= " AND s.name = '".$schema."'";
 
 		$sql .= ' ORDER BY t.name, i.name, i.index_id, ic.index_column_id';
 		
