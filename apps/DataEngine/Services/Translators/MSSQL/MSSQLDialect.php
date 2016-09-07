@@ -16,10 +16,70 @@ use Phalcon\Db\DialectInterface;
  *
  * Generates database specific SQL for the MySQL RDBMS
  */
-class MSSQL extends Dialect
-{
 
-	protected $_escapeChar = "`";
+// Wrapper function from Zephir
+function memstr($mystring, $findme) {
+	return (strpos($mystring, $findme) !== false);
+}
+
+class MSSQL extends Dialect {
+
+	protected $_escapeCharLeft = "[";
+	protected $_escapeCharRight = "]";
+
+	protected function escapeExt($str, $escapeLeft = null, $escapeRight = null) {
+		// Take global default for both
+		if (!$escapeLeft && !$escapeRight) {
+			$escapeLeft = $this->_escapeCharLeft;
+			$escapeRight = $this->_escapeCharRight;
+		}
+		// Take the same for simple (same) escape char
+		if ($escapeLeft && !$escapeRight) {
+			$escapeRight = $escapeLeft;
+		}
+
+
+
+		// Escape simple elements with only one object
+		if (!memstr($str, ".")) {
+			if ($escapeCharLeft != "" && $str != "*")
+				return $escapeLeft . $str . $escapeRight;
+
+			// No escape chars or "*"
+			return $str;
+		}
+
+		// Split the parts
+		$parts = explode(".", trim($str, $escapeLeft.$escapeRight));
+		$newParts = $parts;
+		foreach ($parts as $key=>$part) {
+			// Left * and empty values as is
+			if ($escapeLeft == "" || $part == "" || $part == "*") {
+				continue;
+			}
+
+			$newParts[$key] = $escapeLeft . $part . $escapeRight;
+		}
+
+		return implode(".", $newParts);
+	}
+
+	protected function prepareTable($table, $schema = null, $alias = null, $escapeLeft = null, $escapeRight = null) {
+
+		$table = $this->escapeExt($table, $escapeLeft, $escapeRight);
+
+		if ($schema)
+			$table = $this->escapeExt($schema, $escapeLeft, $escapeRight) . $table;
+
+		if ($alias)
+			$table = $table . " AS " . $this->escapeExt($alias, $escapeLeft, $escapeRight);
+
+		return $table;
+	}
+
+
+
+
 
 	/**
 	 * Gets the column name in MySQL

@@ -24,8 +24,17 @@ use PDO;
 
 
 class Discovery extends DiscoverySQL {
-// Use common adapter trait for MySQL
+	
+	// Use common adapter trait for MSSQL
 	use TraitAdapter;
+
+	protected $_escapeCharLeft = "[";
+	protected $_escapeCharRight = "]";
+
+
+	//
+	// List database contents and structures
+	//
 
 	protected function _listDatabases(PdoAdapter $db) {
 		$sth = $db->query('SHOW DATABASES WHERE `Database` NOT RLIKE "(performance|information)_schema"');
@@ -56,6 +65,9 @@ class Discovery extends DiscoverySQL {
 	protected function _listReferences(PdoAdapter $db, $dbname, $schemaname, $tablename) {
 		return $db->describeReferences($tablename, $schemaname);
 	}
+
+
+
 
 	protected function _getIndexType(Index $idx) {
 		$s_type = $idx->getType();

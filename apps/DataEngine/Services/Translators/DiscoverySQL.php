@@ -32,6 +32,8 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 	protected $_placeholders = array();
 	protected $_fields = array();
 
+	protected $_escapeCharLeft = "`";
+	protected $_escapeCharRight = "`";
 
 	/**
 	 * SQL-specific stubs
@@ -43,6 +45,50 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 	abstract protected function _createAdapter(Connection $c);
 
 
+
+	/**
+	 * Escape query elements
+	 * Taken from MSSQLDialect.php
+	 */
+	protected function _escape($str, $escapeLeft = null, $escapeRight = null) {
+		// Take global default for both
+		if (!$escapeLeft && !$escapeRight) {
+			$escapeLeft = $this->_escapeCharLeft;
+			$escapeRight = $this->_escapeCharRight;
+		}
+		// Take the same for simple (same) escape char
+		if ($escapeLeft && !$escapeRight) {
+			$escapeRight = $escapeLeft;
+		}
+
+		// Escape simple elements with only one object
+		if (strpos($str, ".") !== false) {
+			if ($escapeCharLeft != "" && $str != "*")
+				return $escapeLeft . $str . $escapeRight;
+
+			// No escape chars or "*"
+			return $str;
+		}
+
+		// Split the parts
+		$parts = explode(".", trim($str, $escapeLeft.$escapeRight));
+		$newParts = $parts;
+		foreach ($parts as $key=>$part) {
+			// Left * and empty values as is
+			if ($escapeLeft == "" || $part == "" || $part == "*") {
+				continue;
+			}
+
+			$newParts[$key] = $escapeLeft . $part . $escapeRight;
+		}
+
+		return implode(".", $newParts);
+	}
+
+
+	/**
+	 *
+	 */
 	protected function _getAdapter(Connection $c = NULL) {
 		if (!$this->_adapter) {
 			// Try to use current connection if not provided
@@ -140,7 +186,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 					$o_ph->rowsCount = $o_countRes->fetch()[0];
 					*/
 					
-					$o_ph->rowsCount = $this->_getAdapter($conn)->fetchColumn('SELECT COUNT(*) FROM '.$s_phpath);
+					$o_ph->rowsCount = $this->_getAdapter($conn)->fetchColumn('SELECT COUNT(*) FROM '.$this->_escape($s_phpath));
 
 
 

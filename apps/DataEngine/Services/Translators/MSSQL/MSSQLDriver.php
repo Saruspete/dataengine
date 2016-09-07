@@ -39,6 +39,8 @@ function globals_get($feature) {
 	return false;
 }
 
+
+// Include the dialect from plain PHP
 require __DIR__.'/MSSQLDialect.php';
 
 
