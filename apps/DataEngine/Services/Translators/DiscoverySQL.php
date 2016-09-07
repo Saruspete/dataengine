@@ -109,8 +109,8 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 					$s_phStatus = 'unchanged';
 
 					// TODO : Add schema
-					$s_phpath = $s_base.'.'.$s_table;
-					$s_phname = $s_base.' - '.$s_table;
+					$s_phpath = $s_schema.'.'.$s_table;
+					$s_phname = $s_schema.' - '.$s_table;
 
 					// Try to get an existing placeholder
 					$o_ph = Placeholder::findFirst(array(
@@ -344,7 +344,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 			echo "<h3>$s_base</h3>";
 
 
-			foreach ($a_schemas as $s_schema) {
+			foreach ($this->_listSchemas($db, $s_base) as $s_schema) {
 
 				// Get the foreign keys
 				foreach ($this->_placeholders as $s_phpath=>$o_ph) {

@@ -29,13 +29,13 @@ class Discovery extends DiscoverySQL {
 	use TraitAdapter;
 
 	protected function _listDatabases(PdoAdapter $db) {
-		$sth = $db->query('SHOW DATABASES WHERE `Database` NOT RLIKE "(performance|information)_schema"');
-		return $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+		// For mysql, a schema is a database
+		return array('default');
 	}
 
 	protected function _listSchemas(PdoAdapter $db, $dbname) {
-		// MySQL Doesn't care about schemas
-		return array('default');
+		$sth = $db->query('SHOW DATABASES WHERE `Database` NOT RLIKE "(performance|information)_schema"');
+		return $sth->fetchAll(PDO::FETCH_COLUMN, 0);
 	}
 
 	protected function _listTables(PdoAdapter $db, $dbname, $schemaname) {
