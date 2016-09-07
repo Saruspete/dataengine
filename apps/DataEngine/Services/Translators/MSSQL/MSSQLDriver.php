@@ -84,7 +84,7 @@ class MSSQLDriver extends PdoAdapter implements AdapterInterface {
 		 * Get the describe
 		 * Field Indexes: 0:name, 1:type, 2:not null, 3:key, 4:default, 5:extra
 		 */
-		foreach($this->fetchAll($this->_dialect->describeColumns($table, $schema), Db::FETCH_NUM) as $field ) {
+		foreach($this->fetchAll($this->_dialect->describeColumns($table, $schema), Db::FETCH_ASSOC) as $field ) {
 
 			/**
 			 * By default the bind types is two
