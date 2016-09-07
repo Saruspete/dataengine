@@ -556,7 +556,7 @@ class MSSQL extends Dialect
 	public function describeColumns($table, $schema = null) {
 		
 		return "SELECT [TABLE_CATALOG], [TABLE_SCHEMA], [TABLE_NAME], [COLUMN_NAME], [COLUMN_DEFAULT], [IS_NULLABLE], [DATA_TYPE], [CHARACTER_MAXIMUM_LENGTH] "
-		. " FROM ".$this->prepareTable("COLUMNS", "INFORMATION_SCHEMA");
+		. " FROM [INFORMATION_SCHEMA].[COLUMNS]";
 	}
 
 	/**
@@ -599,11 +599,11 @@ class MSSQL extends Dialect
 		$sql = "SELECT DB_NAME() AS DatabaseName, sc.name AS SchemaName, "
 		. "t.name AS TableName, ind.name AS IndexName, ind.type_desc AS IndexType"
 
-		. " FROM ".$this->prepareTable('indexes', 'sys', 'ind')
-		. "   INNER JOIN ".$this->prepareTable('index_columns','sys', 'ic'). " ON ind.object_id = ic.object_id AND ind.index_id = ic.index_id"
-		. "   INNER JOIN ".$this->prepareTable('columns', 'sys', 'col')." ON ic.object_id = col.object_id AND ic.column_id = col.column_id"
-		. "   INNER JOIN ".$this->prepareTable('tables', 'sys', 't')." ON ind.object_id = t.object_id"
-		. "   INNER JOIN ".$this->prepareTable('schemas', 'sys', 'sc')." ON t.schema_id = sc.schema_id "
+		. " FROM sys.indexes AS ind"
+		. "   INNER JOIN sys.index_columns AS ic ON ind.object_id = ic.object_id AND ind.index_id = ic.index_id"
+		. "   INNER JOIN sys.columns AS col ON ic.object_id = col.object_id AND ic.column_id = col.column_id"
+		. "   INNER JOIN sys.tables AS t ON ind.object_id = t.object_id"
+		. "   INNER JOIN sys.schemas AS sc ON t.schema_id = sc.schema_id "
 		. " WHERE ind.name IS NOT NULL "
 //		. "   AND o.type = 'U'"
 		. "   AND t.name = '".$table."'";
@@ -650,6 +650,8 @@ class MSSQL extends Dialect
 		}
 		return $sql . "TABLES.TABLE_NAME = '" . $table . "'";
 	}
+
+
 
 
 	protected function _getObjectExists($name, $type = 'U') {
@@ -726,4 +728,5 @@ class MSSQL extends Dialect
 
 		return "";
 	}
+
 }
