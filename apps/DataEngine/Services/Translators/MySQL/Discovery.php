@@ -35,7 +35,7 @@ class Discovery extends DiscoverySQL {
 
 	protected function _listSchemas(PdoAdapter $db, $dbname) {
 		// MySQL Doesn't care about schemas
-		return 'default';
+		return array('default');
 	}
 
 	protected function _listTables(PdoAdapter $db, $dbname, $schemaname) {

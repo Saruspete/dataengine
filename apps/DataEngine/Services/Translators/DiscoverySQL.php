@@ -101,7 +101,7 @@ abstract class DiscoverySQL extends BaseService implements InterfaceDiscover {
 		foreach ($a_bases as $s_base) {
 
 			// List Schemas
-			foreach ($a_schemas as $s_schema) {
+			foreach ($this->_listSchemas($db, $s_base) as $s_schema) {
 
 				// List tables
 				foreach ($this->_listTables($db, $s_base, $s_schema) as $s_table) {
