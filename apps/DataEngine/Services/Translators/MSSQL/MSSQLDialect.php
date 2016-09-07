@@ -690,9 +690,9 @@ class MSSQL extends Dialect {
 		// I Should use information_schema, but I also need to know the primary key, so SYS
 		$sql = "SELECT [TABLE_CATALOG], [TABLE_SCHEMA], [TABLE_NAME], [COLUMN_NAME], [COLUMN_DEFAULT], [IS_NULLABLE], [DATA_TYPE], [CHARACTER_MAXIMUM_LENGTH], [ORDINAL_POSITION], [NUMERIC_PRECISION], [NUMERIC_PRECISION_RADIX], [NUMERIC_SCALE], [DATETIME_PRECISION], [CHARACTER_SET_NAME], [COLLATION_NAME] "
 		. " FROM [INFORMATION_SCHEMA].[COLUMNS]"
-		. " WHERE TABLE_NAME='".$table."'"
+		. " WHERE [TABLE_NAME]='".$table."'"
 		if ($schema)
-			$sql .= 
+			$sql .= " AND [TABLE_SCHEMA] = '".$schema."'";
 		
 		$sql .= " ORDER BY [TABLE_CATALOG], [TABLE_SCHEMA], [TABLE_NAME], [COLUMN_NAME], [ORDINAL_POSITION]";
 
