@@ -27,12 +27,13 @@ define('APP_PATH', realpath(BASE_PATH.'/apps'));
 	/**
 	 * Include services
 	 */
-	require BASE_PATH . '/config/services.php';
+	require BASE_PATH . '/config/services.http.php';
 
 	/**
 	 * Handle the request
 	 */
 	$application = new Application($di);
+	$di->setShared('application', $application);
 	
 	// Register the Frontend for every request going from HTTP
 	$loader = new Loader();

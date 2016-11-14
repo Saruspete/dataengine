@@ -14,8 +14,12 @@ $application->registerModules(array(
 		'className'	=> 'AMPortal\Frontend\Module',
 		'path'		=> __DIR__ . '/../apps/Frontend/Module.php'
 	),
-    'DataEngine' => array(
-        'className'	=> 'AMPortal\DataEngine\Module',
-        'path'		=> __DIR__ . '/../apps/DataEngine/Module.php'
-    ),
+	'DataEngine' => array(
+		'className'	=> 'AMPortal\DataEngine\Module',
+		'path'		=> __DIR__ . '/../apps/DataEngine/Module.php'
+	),
+	'TechInventory' => array(
+		'className' => 'AMPortal\TechInventory\Module',
+		'path'		=> __DIR__ . '/../apps/TechInventory/Module.php'	
+	),
 ));

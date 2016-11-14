@@ -1,0 +1,1 @@
+{% include "../../Frontend/Views/index.volt" %}

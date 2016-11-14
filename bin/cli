@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -u
+
+typeset MYSELF="$(readlink -f $0)"
+typeset MYPATH="${MYSELF%/*}"
+
+typeset PHALCON="$MYPATH/../../bin/phalcon"
+
+# Go to project path
+cd "$MYPATH/.."
+
+#$PHALCON list
+php $MYPATH/cli.php "$@"

@@ -118,6 +118,8 @@ jQuery(document).ready(function($) {
 				if ( ! $("#fields_to").length ) {
 					$("#fields_to").append($("<option></option>"));
 				}
+
+				$("#fields").refresh();
 			});
 		}
 	});

@@ -18,6 +18,7 @@ use AMPortal\Frontend\Library\Elements;
 // Candidates for removal as default of FactoryDefault
 use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
 
+require_once __DIR__.'/services.common.php';
 
 /**
  * Shared configuration service

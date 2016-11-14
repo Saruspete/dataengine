@@ -18,32 +18,7 @@ use Phalcon\Mvc\User\Component;
  */
 class Elements extends Component {
 
-	private $_headerMenu = array(
-		'navbar-left' => array(
-			'index' => array(
-				'caption' => 'Home',
-				'action' => 'index'
-			),
-			'invoices' => array(
-				'caption' => 'Invoices',
-				'action' => 'index'
-			),
-			'about' => array(
-				'caption' => 'About',
-				'action' => 'index'
-			),
-			'contact' => array(
-				'caption' => 'Contact',
-				'action' => 'index'
-			),
-		),
-		'navbar-right' => array(
-			'session' => array(
-				'caption' => 'Log In/Sign Up',
-				'action' => 'index'
-			),
-		)
-	);
+	private $_headerMenu;
 
 	private $_tabs = array(
 		'Invoices' => array(
@@ -73,6 +48,52 @@ class Elements extends Component {
 		)
 	);
 
+
+	protected function initMenu() {
+
+		// Setup the base Menu
+		$this->_headerMenu  = array(
+			'navbar-left' => array(
+				'index' => array(
+					'caption' => 'Home',
+					'action' => 'index'
+				),
+				'invoices' => array(
+					'caption' => 'Invoices',
+					'action' => 'index'
+				),
+				'contact' => array(
+					'caption' => 'Contact',
+					'action' => 'index'
+				),
+			),
+			'navbar-right' => array(
+				'session' => array(
+					'caption' => '<span class="glyphicon glyphicon-user" aria-hidden="true"></span>',
+					'action' => 'index'
+				),
+			)
+		);
+
+		foreach ($this->getModulesDef() as $aModDef) {
+			
+		}
+	}
+
+
+	/**
+	 * Load definition from other modules
+	 *
+	 */
+	protected function getModulesDef() {
+		$oDi = $this->getDi();
+		foreach ($oDi->getShared('application')->getModules() as $aMod) {
+			// mod has 2 keys: className & path
+			echo "== ", $aMod['className'], " ==";
+		}
+	}
+
+
 	/**
 	 * Builds header menu with left and right items
 	 *
@@ -80,13 +101,16 @@ class Elements extends Component {
 	 */
 	public function getMenu() {
 
+		$this->initMenu();
+
 		$auth = $this->session->get('auth');
 		if ($auth) {
 			$this->_headerMenu['navbar-right']['session'] = array(
 				'caption' => 'Log Out',
 				'action' => 'end'
 			);
-		} else {
+		} 
+		else {
 			unset($this->_headerMenu['navbar-left']['invoices']);
 		}
 

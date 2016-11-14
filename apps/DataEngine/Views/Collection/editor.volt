@@ -22,7 +22,8 @@
 			<br />
 		-->
 			<fieldset>
-				<legend>Add existing</legend>
+				<legend>Add field</legend>
+				<input type="text" id="fields_rename" class="btn btn-block" />
 				<button type="button" id="fields_rightSelected" class="btn btn-block"><i class="glyphicon glyphicon-chevron-right"></i></button>
 				<button type="button" id="fields_leftSelected" class="btn btn-block"><i class="glyphicon glyphicon-chevron-left"></i></button>
 			</fieldset>
