@@ -13,20 +13,11 @@ use Phalcon\Mvc\View;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 use Phalcon\Flash\Session as Flash;
 
-use AMPortal\Frontend\Library\Elements;
 
 // Candidates for removal as default of FactoryDefault
 use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
 
 require_once __DIR__.'/services.common.php';
-
-/**
- * Shared configuration service
- */
-$di->setShared('config', function () {
-	return include APP_PATH . "/Frontend/config/config.php";
-});
-
 
 /**
  * Registering a router
@@ -89,7 +80,16 @@ $di->setShared('view', function () use ($di) {
 				'stat' => true,
 				'compileAlways' => true  
 			]);
-			
+
+			// Custom functions
+			$compiler = $volt->getCompiler();
+			$compiler->addFunction(
+				'ListHelper',
+				function ($resolvedArgs, $exprArgs) {
+					print_r($resolvedArgs);
+					print_r($exprArgs);
+				}
+			);
 
 			return $volt;
 		},
@@ -97,22 +97,6 @@ $di->setShared('view', function () use ($di) {
 	]);
 
 	return $view;
-});
-
-
-/**
- * Database connection is created based in the parameters defined in the configuration file
- */
-$di->setShared('db', function () use ($di) {
-	$config = $di->getConfig();
-
-	$dbConfig = $config->database->toArray();
-	$adapter = $dbConfig['adapter'];
-	unset($dbConfig['adapter']);
-
-	$class = 'Phalcon\Db\Adapter\Pdo\\' . $adapter;
-
-	return new $class($dbConfig);
 });
 
 
@@ -141,21 +125,21 @@ $di->setShared('flash', function () {
 });
 
 
-// TODO : migrate this helper from INVO to a more clean name and parsing
-$di->setShared('elements', function() {
-	return new AMPortal\Frontend\Library\Elements();
+/**
+ * Frontend libraries to be used within modules
+ */
+$di->setShared('navigation', function() {
+	return new AMPortal\Frontend\Library\Navigation();
 });
+
+$di->setShared('listhelper', function() {
+	return new AMPortal\Frontend\Library\ListHelper();
+});
+
+
 
 //
 //
 // Candidates for Removal
 //
 //
-
-/**
- * If the configuration specify the use of metadata adapter use it or use memory otherwise
- * HINT : Already created by FactoryDefault as : Phalcon\Mvc\Model\Metadata\Memory
- */
-$di->setShared('modelsMetadata', function () {
-	return new MetaDataAdapter();
-});
