@@ -15,13 +15,29 @@ ini_set('display_errors', 1);
 
 define('BASE_PATH', realpath('..'));
 define('APP_PATH', realpath(BASE_PATH.'/apps'));
-
+define('APP_TYPE', 'http');
 //try {
+
 
 	// The debug instance need try/catch to be removed
 	$debug = new \Phalcon\Debug();
-	$debug->listen();
+	//$debug->setUri('http://static.phalconphp.com/www/debug/3.0.x/')->listen();
+	$debug->setUri('/phalcondebug/')->listen();
 
+
+	// Register the Frontend for every request going from HTTP
+	$loader = new Loader();
+	$loader->registerNamespaces(array(
+		'AMPortal\Frontend'	 => APP_PATH . '/Frontend/',
+		'Fabfuel\Prophiler'  => APP_PATH . '/Fabfuel/Prophiler',
+	));
+	$loader->register();
+
+
+	// Load the profiler
+	$profiler = new \Fabfuel\Prophiler\Profiler();
+
+	
 	$di = new FactoryDefault();
 
 	/**
@@ -35,12 +51,6 @@ define('APP_PATH', realpath(BASE_PATH.'/apps'));
 	$application = new Application($di);
 	$di->setShared('application', $application);
 	
-	// Register the Frontend for every request going from HTTP
-	$loader = new Loader();
-	$loader->registerNamespaces(array(
-		'AMPortal\Frontend'	 => APP_PATH . '/Frontend/',
-	));
-	$loader->register();
 
 
 	/**
