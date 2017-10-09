@@ -7,34 +7,50 @@
         <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
         {{ get_title() }}
         {{ stylesheet_link('css/bootstrap.min.css') }}
-        {{ stylesheet_link('css/bootstrap.theme.min.css') }}
+        {{ stylesheet_link('css/bootstrap-theme.min.css') }}
+        {{ stylesheet_link('css/common.css') }}
+        {{ stylesheet_link('css/navbar.css') }}
         {{ assets.outputCss() }}
         
     </head>
     <body>
-        <nav class="navbar navbar-default navbar-inverse navbar-static-top" role="navigation">
+        <nav class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
             <div class="container-fluid">
                 <div class="navbar-header">
-                    <a class="navbar-brand" href="#">Frontend</a>
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="/">AMPortal</a>
                 </div>
-                {{ elements.getMenu() }}
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                    {{ navigation.getMenu('navbar-right') }}
+                    </ul>
+                    <ul class="nav navbar-nav">
+                    {{ navigation.getMenu('navbar-left') }}
+                    </ul>
+                </div>
             </div>
         </nav>
-
+        <!-- Empty block for padding down -->
+        <div class="container" style="height:56px; display:block"></div>
+        
         <div class="container-fluid">
-            <!-- Flash -->
             {{ flash.output() }}
-            <!-- End Flash -->
-
             {{ content() }}
             <hr />
             <footer>
-                <p>DataEngine Frontend</p>
+                <p>AMPortal Frontend</p>
             </footer>
         </div>
 
         {{ javascript_include('js/jquery-3.1.0.min.js') }}
         {{ javascript_include('js/bootstrap.min.js') }}
+        {{ javascript_include('js/common.js') }}
+        {{ javascript_include('js/navbar.js') }}
         {{ assets.outputJs() }}
     </body>
 </html>
