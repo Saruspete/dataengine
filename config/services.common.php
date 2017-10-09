@@ -8,7 +8,11 @@
 
 // Candidates for removal as default of FactoryDefault
 use Phalcon\Mvc\Model\Metadata\Memory as MetaDataAdapter;
-
+use Phalcon\Logger;
+use Phalcon\Logger\Multiple as LoggerMultiple;
+use Phalcon\Logger\Adapter\File as LoggerFile;
+use Phalcon\Logger\Adapter\Syslog as LoggerSyslog;
+use Phalcon\Logger\Formatter\Line as LoggerLine;
 
 /**
  * Shared configuration service
@@ -34,6 +38,45 @@ $di->setShared('db', function () use ($di) {
 	return new $class($dbConfig);
 });
 
+/**
+ * Logging for CLI and WEB
+ */
+$di->setShared('logger', function() use ($di) {
+	$oConfig = $di->getConfig();
+	$aLogConfig = $oConfig->logger->toArray();
+
+	$oLoggerMulti = new LoggerMultiple();
+
+	foreach ($aLogConfig as $sAdapter=>$aConf) {
+
+		// Create the object
+		//$sLogType = "Logger".$aConf['type'];
+		$sLogType = "Phalcon\\Logger\\Adapter\\".$aConf['type'];
+
+		$mParam1 = (isset($aConf['param1'])) ? $aConf['param1'] : null;
+		$mParam2 = (isset($aConf['param2'])) ? $aConf['param2'] : null;
+
+		$oLogTmp = new $sLogType($mParam1, $mParam2);
+		//$oLogTmp = new LoggerFile($mParam1, $mParam2);
+
+		// Set the log level
+		if ($aConf['level'])
+			$oLogTmp->setLogLevel($aConf['level']);
+
+		// Change the line format
+		if ($aConf['lineFmt'] || $aConf['dateFmt']) {
+			$sLineFmt = $aConf['lineFmt'];
+			$sDateFmt = $aConf['dateFmt'];
+			$oFmt = new LoggerLine($sLineFmt, $sDateFmt);
+			$oLogTmp->setFormatter($oFmt);
+		}
+
+		// Add it to the MultiLogger
+		$oLoggerMulti->push($oLogTmp);
+	}
+
+	return $oLoggerMulti;
+});
 
 
 //
